@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Hex Elite 2026</title>
+    <!-- 1. Load React and ReactDOM (Development versions) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+    <!-- 2. Load Babel to transpile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { margin: 0; background: #050505; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; overflow: hidden; }
+        .ui { position: absolute; top: 10px; width: 100%; pointer-events: none; z-index: 10; display: flex; justify-content: center; }
+        .ui-inner { pointer-events: auto; background: rgba(0,0,0,0.9); padding: 15px; border: 2px solid #00ff00; border-radius: 12px; min-width: 300px; box-shadow: 0 0 20px #00ff0033; }
+        .stat { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
+        .high-scores { border-top: 1px solid #333; margin-top: 10px; padding-top: 10px; color: #ffcc00; font-size: 12px; }
+        button { padding: 8px 16px; cursor: pointer; background: #00ff00; color: #000; border: none; border-radius: 4px; font-weight: bold; margin-top: 10px; width: 100%; }
+        svg { display: block; margin: auto; height: 100vh; width: 100vw; }
+        .victory { color: #fff; text-shadow: 0 0 10px #0f0; font-size: 1.2em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo } = React;
+
+        const HEX_SIZE = 35;
+        const RADIUS_LIMIT = 4;
+        const GOAL_POS = { q: 0, r: -4 };
+        const OBSTACLES = new Set(["0,-1", "1,-2", "-1,0", "2,-3", "-2,1"]);
+
+        const playSound = (freq, type = 'square', dur = 0.2) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        };
+
+        const HexTile = ({ q, r, isSelected, diff, isGoal, isObstacle, onFlashChange, onSelect }) => {
+            const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.03)");
+            const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
+            const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + window.innerHeight / 2;
+
+            useEffect(() => {
+                if (isGoal || isObstacle) return; 
+                const trigger = () => {
+                    setFlashColor(`hsla(${Math.random() * 360}, 90%, 50%, 0.8)`);
+                    onFlashChange(q, r, true);
+                    // Use diff.duration for faster disappearance
+                    setTimeout(() => { 
+                      setFlashColor("rgba(255,255,255,0.03)"); 
+                      onFlashChange(q, r, false); 
+                    }, diff.duration * 1000);
+                };
+                // Use diff.spawnRate for faster reappearance
+                const timer = setInterval(trigger, (4000 * diff.spawnRate) + Math.random() * 6000);
+                return () => clearInterval(timer);
+            }, [q, r, isGoal, isObstacle]);
+
+            const points = Array.from({length: 6}, (_, i) => {
+                const a = (Math.PI / 180) * (60 * i);
+                return `${x + HEX_SIZE * Math.cos(a)},${y + HEX_SIZE * Math.sin(a)}`;
+            }).join(" ");
+
+            let fill = isSelected ? "yellow" : flashColor;
+            if (isGoal && !isSelected) fill = "#004411";
+            if (isObstacle) fill = "#110000";
+
+            return (
+                <polygon points={points} fill={fill} stroke={isObstacle ? "#ff0000" : "#222"} strokeWidth={isObstacle ? "4" : "1"} onClick={() => !isObstacle && onSelect(q, r)} />
+            );
+        };
+
+        const App = () => {
+
+            const DIFFICULTY_LEVELS = {
+            EASY: { label: "EASY", spawnRate: 1, duration: 1.5 },
+            HARD: { label: "HARD", spawnRate: 0.5, duration: 0.8 },
+            ELITE: { label: "ELITE", spawnRate: 0.3, duration: 0.5 }
+            };
+
+            const [diff, setDiff] = useState(DIFFICULTY_LEVELS.EASY);            
+
+            const [selected, setSelected] = useState({ q: 0, r: 4 });
+            const [flashMap, setFlashMap] = useState({});
+            const [timer, setTimer] = useState(0);
+            const [collisions, setCollisions] = useState(0);
+            const [status, setStatus] = useState("playing");
+            
+            // High Score State (Fastest Time / Least Collisions)
+            const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
+            const [bestCollisions, setBestCollisions] = useState(() => localStorage.getItem('hex_best_hits') || '--');
+
+            const clearHighScores = () => {
+                localStorage.removeItem('hex_best_time');
+                localStorage.removeItem('hex_best_hits');
+                setBestTime('--');
+                setBestCollisions('--');
+                playSound(200, 'sawtooth', 0.1); // Short "blip" sound for confirmation
+            };
+
+            useEffect(() => {
+                let interval;
+                if (status === "playing") interval = setInterval(() => setTimer(t => t + 1), 1000);
+                return () => clearInterval(interval);
+            }, [status]);
+
+            const updateHighScores = useCallback(() => {
+                const currentBestTime = localStorage.getItem('hex_best_time');
+                const currentBestHits = localStorage.getItem('hex_best_hits');
+
+                if (!currentBestTime || timer < parseInt(currentBestTime)) {
+                    localStorage.setItem('hex_best_time', timer);
+                    setBestTime(timer);
+                }
+                if (!currentBestHits || collisions < parseInt(currentBestHits)) {
+                    localStorage.setItem('hex_best_hits', collisions);
+                    setBestCollisions(collisions);
+                }
+            }, [timer, collisions]);
+
+            useEffect(() => {
+                if (selected.q === GOAL_POS.q && selected.r === GOAL_POS.r && status === "playing") {
+                    setStatus("won");
+                    playSound(523, 'sine', 0.5);
+                    updateHighScores();
+                }
+            }, [selected, status, updateHighScores]);
+
+            const move = useCallback((dq, dr) => {
+                if (status === "won") return;
+                const nQ = selected.q + dq, nR = selected.r + dr;
+                const coordKey = `${nQ},${nR}`;
+                const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
+                
+                if (!inBounds) return;
+                if (OBSTACLES.has(coordKey) || flashMap[coordKey]) {
+                    setCollisions(c => c + 1);
+                    playSound(80, 'square');
+                    return;
+                }
+                setSelected({ q: nQ, r: nR });
+            }, [selected, flashMap, status]);
+
+            useEffect(() => {
+                const keys = { ArrowUp:[0,-1], ArrowDown:[-1,-1], ArrowLeft:[-1,0], ArrowRight:[1,1] };
+                const listener = (e) => keys[e.key] && move(...keys[e.key]);
+                window.addEventListener('keydown', listener);
+                return () => window.removeEventListener('keydown', listener);
+            }, [move]);
+
+            const tiles = useMemo(() => {
+                const arr = [];
+                for (let q = -RADIUS_LIMIT; q <= RADIUS_LIMIT; q++) {
+                    for (let r = Math.max(-RADIUS_LIMIT, -q-RADIUS_LIMIT); r <= Math.min(RADIUS_LIMIT, -q+RADIUS_LIMIT); r++) arr.push({ q, r });
+                }
+                return arr;
+            }, []);
+
+            return (
+                <div>
+                    <div className="ui">
+                        <div className="ui-inner">
+                            {status === "won" && <div className="victory">SYSTEM SECURED!</div>}
+                            <div className="stat"><span>TIME:</span> <span>{timer}s</span></div>
+                            <div className="stat"><span>HITS:</span> <span>{collisions}</span></div>
+                            <div className="high-scores">
+                                <div className="stat"><span>FASTEST TIME:</span> <span>{bestTime}{bestTime !== '--' && 's'}</span></div>
+                                <div className="stat"><span>FEWEST HITS:</span> <span>{bestCollisions}</span></div>
+                            </div>
+                            <div className="difficulty">
+                                <label htmlFor="difficulty-select">DIFFICULTY:</label>
+                                <select 
+                                    id="difficulty-select" 
+                                    value={diff.label} 
+                                    onChange={(e) => setDiff(DIFFICULTY_LEVELS[e.target.value])}
+                                    style={{ marginLeft: '10px', padding: '4px', backgroundColor: '#000', color: '#0f0', border: '1px solid #0f0' }}>
+                                    {Object.values(DIFFICULTY_LEVELS).map(level => (
+                                        <option key={level.label} value={level.label}>{level.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button onClick={() => { setSelected({q:0,r:4}); setTimer(0); setCollisions(0); setStatus("playing"); }}>RESET SIMULATION</button>
+                            <button 
+                                onClick={clearHighScores} 
+                                style={{ marginTop: '5px', backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>
+                                CLEAR HIGH SCORES
+                            </button>
+                        </div>
+                    </div>
+                    <svg viewBox={`0 -30 ${window.innerWidth} ${window.innerHeight}`}>
+                        {tiles.map(t => (
+                            <HexTile 
+                                key={`${t.q},${t.r}`} q={t.q} r={t.r} 
+                                isGoal={t.q === GOAL_POS.q && t.r === GOAL_POS.r}
+                                isObstacle={OBSTACLES.has(`${t.q},${t.r}`)}
+                                diff={diff}
+                                isSelected={selected.q === t.q && selected.r === t.r}
+                                onFlashChange={(q, r, act) => setFlashMap(p => ({...p, [`${q},${r}`]: act}))}
+                                onSelect={(q, r) => status === "playing" && !flashMap[`${q},${r}`] && !OBSTACLES.has(`${q},${r}`) && setSelected({q, r})}
+                            />
+                        ))}
+                    </svg>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
