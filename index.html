@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>Hex Elite 2026</title>
+    <title>Hexel 2026</title>
     <!-- 1. Load React and ReactDOM (Development versions) -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
@@ -18,6 +18,9 @@
         button { padding: 8px 16px; cursor: pointer; background: #00ff00; color: #000; border: none; border-radius: 4px; font-weight: bold; margin-top: 10px; width: 100%; }
         svg { display: block; margin: auto; height: 100vh; width: 100vw; }
         .victory { color: #fff; text-shadow: 0 0 10px #0f0; font-size: 1.2em; margin-bottom: 10px; }
+        .wall-blocked { color: #ff0000; font-weight: bold; }
+        /* Style for the Start and Goal text labels */
+        .tile-label { font-size: 12px; fill: #b614df; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
     </style>
 </head>
 <body>
@@ -28,8 +31,22 @@
 
         const HEX_SIZE = 35;
         const RADIUS_LIMIT = 4;
+        const START_POS = { q: 0, r: 4 };
         const GOAL_POS = { q: 0, r: -4 };
-        const OBSTACLES = new Set(["0,-1", "1,-2", "-1,0", "2,-3", "-2,1"]);
+
+        // Helper to generate a unique key for a wall between two hexes
+        const makeWallKey = (q1, r1, q2, r2) => [ `${q1},${r1}`, `${q2},${r2}` ].sort().join('|');
+
+        // Define specific edges as walls (Pairing two adjacent hex coordinates)
+        const WALLS = new Set([
+            //makeWallKey(0, 0, 0, -1),
+            makeWallKey(0, 0, 1, -1),
+            //makeWallKey(0, 0, -1, 0),
+            makeWallKey(1, -1, 1, -2),
+            //makeWallKey(-1, 0, -1, 1),
+            makeWallKey(-1, 1, 0, 1),
+            makeWallKey(-2, 2, -1, 2)
+        ]);
 
         const playSound = (freq, type = 'square', dur = 0.2) => {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -45,13 +62,14 @@
             osc.start(); osc.stop(ctx.currentTime + dur);
         };
 
-        const HexTile = ({ q, r, isSelected, diff, isGoal, isObstacle, onFlashChange, onSelect }) => {
+        const HexTile = ({ q, r, isSelected, diff, isGoal, onFlashChange, onSelect }) => {
             const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.03)");
             const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
             const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + window.innerHeight / 2;
+            const isStart = q === START_POS.q && r === START_POS.r;
 
             useEffect(() => {
-                if (isGoal || isObstacle) return; 
+                if (isGoal) return;
                 const trigger = () => {
                     setFlashColor(`hsla(${Math.random() * 360}, 90%, 50%, 0.8)`);
                     onFlashChange(q, r, true);
@@ -64,19 +82,42 @@
                 // Use diff.spawnRate for faster reappearance
                 const timer = setInterval(trigger, (4000 * diff.spawnRate) + Math.random() * 6000);
                 return () => clearInterval(timer);
-            }, [q, r, isGoal, isObstacle]);
+            }, [q, r, isGoal]);
 
             const points = Array.from({length: 6}, (_, i) => {
                 const a = (Math.PI / 180) * (60 * i);
-                return `${x + HEX_SIZE * Math.cos(a)},${y + HEX_SIZE * Math.sin(a)}`;
-            }).join(" ");
+                return { x: x + HEX_SIZE * Math.cos(a), y: y + HEX_SIZE * Math.sin(a) };
+            });
 
             let fill = isSelected ? "yellow" : flashColor;
             if (isGoal && !isSelected) fill = "#004411";
-            if (isObstacle) fill = "#110000";
+            // Draw Wall Lines: Only draw if the wall exists between this tile and a neighbor
+            const wallElements = [];
+            const neighbors = [[1,0], [1,-1], [0,-1], [-1,0], [-1,1], [0,1]];
+            neighbors.forEach(([dq, dr], i) => {
+                if (WALLS.has(makeWallKey(q, r, q + dq, r + dr))) {
+                    // Each hex side corresponds to corners (i, i+1)
+                    const p1 = points[i];
+                    const p2 = points[(i + 1) % 6];
+                    wallElements.push(
+                        <line key={`wall-${i}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} 
+                              stroke="#ff0000" strokeWidth="6" strokeLinecap="round" />
+                    );
+                }
+            });
 
             return (
-                <polygon points={points} fill={fill} stroke={isObstacle ? "#ff0000" : "#222"} strokeWidth={isObstacle ? "4" : "1"} onClick={() => !isObstacle && onSelect(q, r)} />
+                <g>
+                    <polygon 
+                        points={points.map(p => `${p.x},${p.y}`).join(" ")} 
+                        fill={isSelected ? "yellow" : (isGoal ? "#004411" : flashColor)} 
+                        stroke="#222" 
+                        onClick={() => onSelect(q, r)} 
+                    />
+                    {isStart && <text x={x} y={y} className="tile-label">START</text>}
+                    {isGoal && <text x={x} y={y} className="tile-label">GOAL</text>}
+                    {wallElements}
+                </g>
             );
         };
 
@@ -117,8 +158,9 @@
             const updateHighScores = useCallback(() => {
                 const currentBestTime = localStorage.getItem('hex_best_time');
                 const currentBestHits = localStorage.getItem('hex_best_hits');
-
+                console.log('Updating high scores:', { timer, collisions, currentBestTime, currentBestHits });
                 if (!currentBestTime || timer < parseInt(currentBestTime)) {
+                    console.log('New best time:', timer);
                     localStorage.setItem('hex_best_time', timer);
                     setBestTime(timer);
                 }
@@ -129,8 +171,7 @@
             }, [timer, collisions]);
 
             useEffect(() => {
-                if (selected.q === GOAL_POS.q && selected.r === GOAL_POS.r && status === "playing") {
-                    setStatus("won");
+                if (selected.q == GOAL_POS.q && selected.r == GOAL_POS.r && status === "won") {
                     playSound(523, 'sine', 0.5);
                     updateHighScores();
                 }
@@ -141,14 +182,23 @@
                 const nQ = selected.q + dq, nR = selected.r + dr;
                 const coordKey = `${nQ},${nR}`;
                 const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
-                
                 if (!inBounds) return;
-                if (OBSTACLES.has(coordKey) || flashMap[coordKey]) {
-                    setCollisions(c => c + 1);
-                    playSound(80, 'square');
-                    return;
+
+                // 1. Check if moving through a wall
+                if (WALLS.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
+                    setCollisions(h => h + 1); playSound(80); return;
                 }
+
+                // 2. Check boundaries
+                if (Math.max(Math.abs(nQ), Math.abs(nR), Math.abs(-nQ-nR)) > RADIUS_LIMIT) return;
+
+                // 3. Check color hazards
+                if (flashMap[`${nQ},${nR}`]) {
+                    setCollisions(h => h + 1); playSound(120); return;
+                }
+
                 setSelected({ q: nQ, r: nR });
+                if (nQ === GOAL_POS.q && nR === GOAL_POS.r) setStatus("won");
             }, [selected, flashMap, status]);
 
             useEffect(() => {
@@ -202,14 +252,16 @@
                             <HexTile 
                                 key={`${t.q},${t.r}`} q={t.q} r={t.r} 
                                 isGoal={t.q === GOAL_POS.q && t.r === GOAL_POS.r}
-                                isObstacle={OBSTACLES.has(`${t.q},${t.r}`)}
                                 diff={diff}
                                 isSelected={selected.q === t.q && selected.r === t.r}
                                 onFlashChange={(q, r, act) => setFlashMap(p => ({...p, [`${q},${r}`]: act}))}
-                                onSelect={(q, r) => status === "playing" && !flashMap[`${q},${r}`] && !OBSTACLES.has(`${q},${r}`) && setSelected({q, r})}
+                                onSelect={(q, r) => status === "playing" && !flashMap[`${q},${r}`] && setSelected({q, r})}
                             />
                         ))}
                     </svg>
+                    <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
+                        Hexel 2026 - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
+                    </label>
                 </div>
             );
         };
