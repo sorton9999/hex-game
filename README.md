@@ -4,6 +4,9 @@ There is a difficulty level that can be set to make the game more challenging.
 
 See if you can better your previous high score.
 
+--- Screenshots ---
+![Hexel 2026 v.1](/../screenshots/Hexel.v.1-start.png?raw=true "Hexel 2026 v.1")
+
 --- ChangeLog ---
 01/31/2026 -- v.1:
   1. Provides 3 levels of difficulty -- Easy, Hard, Elite
