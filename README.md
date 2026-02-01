@@ -25,7 +25,7 @@ See if you can better your previous high score.
   3. Additional labels for things
 
 Proposed additions for v.2:
-1. Change blockers from using whole hex tiles to walls using individual hex segments
+1. Change blockers from using whole hex tiles to walls using individual hex segments [DONE]
 2. Additional blocker walls with increasing difficulty (investigate moving walls)
 3. Different gameboard sizes
 4. Better sound effects
