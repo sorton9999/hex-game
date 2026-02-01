@@ -9,11 +9,20 @@ See if you can better your previous high score.
 (Hexel 2026 v.1)
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.1-start.png?raw=true "Hexel 2026 v.1")
 
+
+(Hexel 2026 v.2)
+![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
+
+
 --- ChangeLog ---
 01/31/2026 -- v.1:
   1. Provides 3 levels of difficulty -- Easy, Hard, Elite
   2. Scoring for the recently ended game -- Time and # Hits
   3. Simple sound effects for bumping into obstacles and reaching the goal
+02/01/2026 -- v.2:
+  1. New walls replacing blocking hex tiles
+  2. Better difficulty algorithm
+  3. Additional labels for things
 
 Proposed additions for v.2:
 1. Change blockers from using whole hex tiles to walls using individual hex segments
