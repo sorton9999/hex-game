@@ -137,12 +137,6 @@
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
                     />
-       <text x={x} y={y} dy="0.3em" 
-            textAnchor="middle" 
-            style={{ fill: isSelected ? '#34495e' : '#f1c40f' }} // Opposite color from hex
-            fontSize="10">{q},{r}</text>
-                   {isStart && <text x={x} y={y} className="tile-label">START</text>}
-                    {isGoal && <text x={x} y={y} className="tile-label">GOAL</text>}
                     {wallElements}
                 </g>
             );
