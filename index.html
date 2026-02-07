@@ -38,15 +38,37 @@
         const makeWallKey = (q1, r1, q2, r2) => [ `${q1},${r1}`, `${q2},${r2}` ].sort().join('|');
 
         // Define specific edges as walls (Pairing two adjacent hex coordinates)
-        const WALLS = new Set([
-            //makeWallKey(0, 0, 0, -1),
-            makeWallKey(0, 0, 1, -1),
-            //makeWallKey(0, 0, -1, 0),
+        const WALLS_EASY = new Set([
+            makeWallKey(0, 0, 1, 0),
             makeWallKey(1, -1, 1, -2),
-            //makeWallKey(-1, 0, -1, 1),
+            makeWallKey(1, -2, 2, -2),
             makeWallKey(-1, 1, 0, 1),
             makeWallKey(-2, 2, -1, 2)
         ]);
+        const WALLS_HARD = new Set([
+            makeWallKey(0, 0, 0, -1),
+            makeWallKey(0, 0, 1, 0),
+            makeWallKey(0, 0, -1, 0),
+            makeWallKey(1, -1, 1, -2),
+            makeWallKey(1, -2, 2, -2),
+            makeWallKey(-1, 1, 0, 1),
+            makeWallKey(-2, 2, -1, 2)
+        ]);
+        const WALLS_ELITE = new Set([
+            makeWallKey(0, 0, 0, -1),
+            makeWallKey(0, 0, 1, 0),
+            makeWallKey(0, 0, -1, 0),
+            makeWallKey(0, -2, 1, -2),
+            makeWallKey(1, -1, 1, -2),
+            makeWallKey(1, -2, 2, -2),
+            makeWallKey(-1, 1, 0, 1),
+            makeWallKey(-1, 1, -2, 1),
+            makeWallKey(-2, 2, -1, 2),
+            makeWallKey(3, -3, 3, -2),
+            makeWallKey(0, -3, 0, -2),
+            makeWallKey(-3, 0, -2, 0)
+        ]);
+       
 
         const playSound = (freq, type = 'square', dur = 0.2) => {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -67,7 +89,8 @@
             const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
             const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + window.innerHeight / 2;
             const isStart = q === START_POS.q && r === START_POS.r;
-
+            const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
+            
             useEffect(() => {
                 if (isGoal) return;
                 const trigger = () => {
@@ -95,7 +118,7 @@
             const wallElements = [];
             const neighbors = [[1,0], [1,-1], [0,-1], [-1,0], [-1,1], [0,1]];
             neighbors.forEach(([dq, dr], i) => {
-                if (WALLS.has(makeWallKey(q, r, q + dq, r + dr))) {
+                if (wallsInUse.has(makeWallKey(q, r, q + dq, r + dr))) {
                     // Each hex side corresponds to corners (i, i+1)
                     const p1 = points[i];
                     const p2 = points[(i + 1) % 6];
@@ -114,7 +137,11 @@
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
                     />
-                    {isStart && <text x={x} y={y} className="tile-label">START</text>}
+       <text x={x} y={y} dy="0.3em" 
+            textAnchor="middle" 
+            style={{ fill: isSelected ? '#34495e' : '#f1c40f' }} // Opposite color from hex
+            fontSize="10">{q},{r}</text>
+                   {isStart && <text x={x} y={y} className="tile-label">START</text>}
                     {isGoal && <text x={x} y={y} className="tile-label">GOAL</text>}
                     {wallElements}
                 </g>
@@ -126,7 +153,7 @@
             const DIFFICULTY_LEVELS = {
             EASY: { label: "EASY", spawnRate: 1, duration: 1.5 },
             HARD: { label: "HARD", spawnRate: 0.5, duration: 0.8 },
-            ELITE: { label: "ELITE", spawnRate: 0.3, duration: 0.5 }
+            ELITE: { label: "ELITE", spawnRate: 0.2, duration: 0.3 }
             };
 
             const [diff, setDiff] = useState(DIFFICULTY_LEVELS.EASY);            
@@ -182,10 +209,12 @@
                 const nQ = selected.q + dq, nR = selected.r + dr;
                 const coordKey = `${nQ},${nR}`;
                 const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
+                const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
+                
                 if (!inBounds) return;
 
                 // 1. Check if moving through a wall
-                if (WALLS.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
+                if (wallsInUse.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
                     setCollisions(h => h + 1); playSound(80); return;
                 }
 
@@ -202,7 +231,7 @@
             }, [selected, flashMap, status]);
 
             useEffect(() => {
-                const keys = { ArrowUp:[0,-1], ArrowDown:[-1,-1], ArrowLeft:[-1,0], ArrowRight:[1,1] };
+                const keys = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0] };
                 const listener = (e) => keys[e.key] && move(...keys[e.key]);
                 window.addEventListener('keydown', listener);
                 return () => window.removeEventListener('keydown', listener);
