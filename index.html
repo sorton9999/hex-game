@@ -27,7 +27,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useMemo } = React;
+        const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
         const HEX_SIZE = 35;
         const RADIUS_LIMIT = 4;
@@ -68,20 +68,98 @@
             makeWallKey(0, -3, 0, -2),
             makeWallKey(-3, 0, -2, 0)
         ]);
-       
 
-        const playSound = (freq, type = 'square', dur = 0.2) => {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + dur);
+        const SOUND_FILES = {
+        collision: './sounds/mixkit-explainer-video-game-alert-sweep-236.wav',
+        victory: './sounds/mixkit-winning-notification-2018.wav',
+        blip: './sounds/mixkit-quick-lock-sound-2854.wav',
+        start: './sounds/mixkit-arcade-rising-231.wav',
+        reset: './sounds/mixkit-extra-bonus-in-a-video-game-2045.wav'
+        };
+      
+
+        const SoundManager = ({isCollision, isVictory, isBlip, isReset}) => {
+            const audioContext = useRef(null);
+            const audioBuffer = useRef(null);
+            const sourceNode = useRef(null);
+            const gainNode = useRef(null);
+            const soundBuffers = useRef({}); // Cache for multiple sound files
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [isUnlocked, setIsUnlocked] = useState(false);
+
+
+            const loadSound = (soundFile) => {
+                audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode.current = audioContext.current.createGain();
+                gainNode.current.connect(audioContext.current.destination);
+                gainNode.current.gain.value = 0.8;
+                fetch(soundFile)                
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioContext.current.decodeAudioData(arrayBuffer))
+                .then(decodedBuffer => {
+                    soundBuffers.current[soundFile] = decodedBuffer;
+                    console.log("Audio loaded successfully");
+                })
+                .catch(err => console.error("Error loading audio", err));
+            };
+
+            const playSound = (name) => {
+                if (!soundBuffers.current[name] || isPlaying) return;
+                sourceNode.current = audioContext.current.createBufferSource();
+                sourceNode.current.buffer = soundBuffers.current[name];
+                sourceNode.current.connect(gainNode.current);
+                sourceNode.current.start(0);
+                setIsPlaying(true);
+                sourceNode.current.onended = () => setIsPlaying(false);
+            };
+
+            const stopSound = () => {
+                if (sourceNode.current) {
+                    sourceNode.current.stop();
+                    setIsPlaying(false);
+                }
+            };
+
+            useEffect(() => {
+                loadSound(SOUND_FILES.blip);
+                loadSound(SOUND_FILES.collision);
+                loadSound(SOUND_FILES.victory);
+                loadSound(SOUND_FILES.reset);
+            }, []);
+
+            useEffect(() => {
+                if (isCollision) playSound(SOUND_FILES.collision);
+            }, [isCollision]);
+
+            useEffect(() => {
+                if (isVictory) playSound(SOUND_FILES.victory);
+            }, [isVictory]);
+
+            useEffect(() => {
+                if (isBlip) playSound(SOUND_FILES.blip);
+            }, [isBlip]);
+
+            useEffect(() => {
+                if (isReset) playSound(SOUND_FILES.reset);
+            }, [isReset]);
+
+            if (!isUnlocked) {
+                return (
+                    <div 
+                        onClick={() => {
+                            if (audioContext.current) {
+                                audioContext.current.resume().then(() => {
+                                    setIsUnlocked(true);
+                                    playSound(SOUND_FILES.start);
+                                });
+                            }
+                        }} 
+                        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', padding: '20px 40px', backgroundColor: '#00ff00', color: '#000', borderRadius: '8px', cursor: 'pointer', zIndex: 20 }}>
+                        CLICK TO START SIMULATION
+                    </div>
+                );
+            }
+            return null; // This component doesn't render anything
         };
 
         const HexTile = ({ q, r, isSelected, diff, isGoal, onFlashChange, onSelect }) => {
@@ -137,6 +215,9 @@
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
                     />
+                    <text x={x} y={y} className="tile-label">
+                        {isStart ? "START" : isGoal ? "GOAL" : ""}
+                    </text>
                     {wallElements}
                 </g>
             );
@@ -156,19 +237,25 @@
             const [flashMap, setFlashMap] = useState({});
             const [timer, setTimer] = useState(0);
             const [collisions, setCollisions] = useState(0);
-            const [status, setStatus] = useState("playing");
+            const [isCollision, setIsCollision] = useState(false);
+            const [isVictory, setIsVictory] = useState(false);
+            const [isReset, setIsReset] = useState(false);
+            const [isBlip, setIsBlip] = useState(false);
+            const [status, setStatus] = useState("idle");
             
             // High Score State (Fastest Time / Least Collisions)
             const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
             const [bestCollisions, setBestCollisions] = useState(() => localStorage.getItem('hex_best_hits') || '--');
+
 
             const clearHighScores = () => {
                 localStorage.removeItem('hex_best_time');
                 localStorage.removeItem('hex_best_hits');
                 setBestTime('--');
                 setBestCollisions('--');
-                playSound(200, 'sawtooth', 0.1); // Short "blip" sound for confirmation
-            };
+                setIsBlip(true);
+                setTimeout(() => setIsBlip(false), 300);
+             };
 
             useEffect(() => {
                 let interval;
@@ -193,13 +280,14 @@
 
             useEffect(() => {
                 if (selected.q == GOAL_POS.q && selected.r == GOAL_POS.r && status === "won") {
-                    playSound(523, 'sine', 0.5);
+                    setIsVictory(true);
                     updateHighScores();
                 }
             }, [selected, status, updateHighScores]);
 
             const move = useCallback((dq, dr) => {
-                if (status === "won") return;
+                if (status === "won") { return; }
+                if (status === "idle") { setStatus("playing"); }
                 const nQ = selected.q + dq, nR = selected.r + dr;
                 const coordKey = `${nQ},${nR}`;
                 const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
@@ -207,9 +295,17 @@
                 
                 if (!inBounds) return;
 
+                if (isReset) {
+                    setIsReset(false);
+                    return;
+                }
+
                 // 1. Check if moving through a wall
                 if (wallsInUse.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
-                    setCollisions(h => h + 1); playSound(80); return;
+                    setCollisions(h => h + 1); setIsCollision(true); return;
+                }
+                else if (isCollision) {
+                    setIsCollision(false); return;
                 }
 
                 // 2. Check boundaries
@@ -217,11 +313,18 @@
 
                 // 3. Check color hazards
                 if (flashMap[`${nQ},${nR}`]) {
-                    setCollisions(h => h + 1); playSound(120); return;
+                    setCollisions(h => h + 1); setIsCollision(true); return;
+                }
+                else if (isCollision) {
+                    setIsCollision(false); return;
                 }
 
                 setSelected({ q: nQ, r: nR });
-                if (nQ === GOAL_POS.q && nR === GOAL_POS.r) setStatus("won");
+                if (nQ === GOAL_POS.q && nR === GOAL_POS.r) {
+                    setIsVictory(true);
+                    setStatus("won");
+                    setTimeout(() => setIsVictory(false), 1000);
+                }
             }, [selected, flashMap, status]);
 
             useEffect(() => {
@@ -262,7 +365,7 @@
                                     ))}
                                 </select>
                             </div>
-                            <button onClick={() => { setSelected({q:0,r:4}); setTimer(0); setCollisions(0); setStatus("playing"); }}>RESET SIMULATION</button>
+                            <button onClick={() => { setSelected({q:0,r:4}); setIsReset(true); setTimer(0); setCollisions(0); setStatus("idle"); }}>RESET SIMULATION</button>
                             <button 
                                 onClick={clearHighScores} 
                                 style={{ marginTop: '5px', backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>
@@ -285,6 +388,7 @@
                     <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
                         Hexel 2026 - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
                     </label>
+                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} />
                 </div>
             );
         };
