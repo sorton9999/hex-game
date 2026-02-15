@@ -213,7 +213,7 @@
             const [isCollision, setIsCollision] = useState(false);
             const [isVictory, setIsVictory] = useState(false);
             const [isBlip, setIsBlip] = useState(false);
-            const [status, setStatus] = useState("playing");
+            const [status, setStatus] = useState("idle");
             
             // High Score State (Fastest Time / Least Collisions)
             const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
@@ -259,6 +259,7 @@
 
             const move = useCallback((dq, dr) => {
                 if (status === "won") { return; }
+                if (status === "idle") { setStatus("playing"); }
                 const nQ = selected.q + dq, nR = selected.r + dr;
                 const coordKey = `${nQ},${nR}`;
                 const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
@@ -331,7 +332,7 @@
                                     ))}
                                 </select>
                             </div>
-                            <button onClick={() => { setSelected({q:0,r:4}); setTimer(0); setCollisions(0); setStatus("playing"); }}>RESET SIMULATION</button>
+                            <button onClick={() => { setSelected({q:0,r:4}); setTimer(0); setCollisions(0); setStatus("idle"); }}>RESET SIMULATION</button>
                             <button 
                                 onClick={clearHighScores} 
                                 style={{ marginTop: '5px', backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>
