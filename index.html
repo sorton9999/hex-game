@@ -72,17 +72,20 @@
         const SOUND_FILES = {
         collision: './sounds/mixkit-explainer-video-game-alert-sweep-236.wav',
         victory: './sounds/mixkit-winning-notification-2018.wav',
-        blip: './sounds/mixkit-quick-lock-sound-2854.wav'
+        blip: './sounds/mixkit-quick-lock-sound-2854.wav',
+        start: './sounds/mixkit-arcade-rising-231.wav',
+        reset: './sounds/mixkit-extra-bonus-in-a-video-game-2045.wav'
         };
       
 
-        const SoundManager = ({isCollision, isVictory, isBlip}) => {
+        const SoundManager = ({isCollision, isVictory, isBlip, isReset}) => {
             const audioContext = useRef(null);
             const audioBuffer = useRef(null);
             const sourceNode = useRef(null);
             const gainNode = useRef(null);
             const soundBuffers = useRef({}); // Cache for multiple sound files
             const [isPlaying, setIsPlaying] = useState(false);
+            const [isUnlocked, setIsUnlocked] = useState(false);
 
 
             const loadSound = (soundFile) => {
@@ -121,6 +124,7 @@
                 loadSound(SOUND_FILES.blip);
                 loadSound(SOUND_FILES.collision);
                 loadSound(SOUND_FILES.victory);
+                loadSound(SOUND_FILES.reset);
             }, []);
 
             useEffect(() => {
@@ -135,6 +139,26 @@
                 if (isBlip) playSound(SOUND_FILES.blip);
             }, [isBlip]);
 
+            useEffect(() => {
+                if (isReset) playSound(SOUND_FILES.reset);
+            }, [isReset]);
+
+            if (!isUnlocked) {
+                return (
+                    <div 
+                        onClick={() => {
+                            if (audioContext.current) {
+                                audioContext.current.resume().then(() => {
+                                    setIsUnlocked(true);
+                                    playSound(SOUND_FILES.start);
+                                });
+                            }
+                        }} 
+                        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', padding: '20px 40px', backgroundColor: '#00ff00', color: '#000', borderRadius: '8px', cursor: 'pointer', zIndex: 20 }}>
+                        CLICK TO START SIMULATION
+                    </div>
+                );
+            }
             return null; // This component doesn't render anything
         };
 
@@ -191,6 +215,9 @@
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
                     />
+                    <text x={x} y={y} className="tile-label">
+                        {isStart ? "START" : isGoal ? "GOAL" : ""}
+                    </text>
                     {wallElements}
                 </g>
             );
@@ -212,6 +239,7 @@
             const [collisions, setCollisions] = useState(0);
             const [isCollision, setIsCollision] = useState(false);
             const [isVictory, setIsVictory] = useState(false);
+            const [isReset, setIsReset] = useState(false);
             const [isBlip, setIsBlip] = useState(false);
             const [status, setStatus] = useState("idle");
             
@@ -266,6 +294,11 @@
                 const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
                 
                 if (!inBounds) return;
+
+                if (isReset) {
+                    setIsReset(false);
+                    return;
+                }
 
                 // 1. Check if moving through a wall
                 if (wallsInUse.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
@@ -332,7 +365,7 @@
                                     ))}
                                 </select>
                             </div>
-                            <button onClick={() => { setSelected({q:0,r:4}); setTimer(0); setCollisions(0); setStatus("idle"); }}>RESET SIMULATION</button>
+                            <button onClick={() => { setSelected({q:0,r:4}); setIsReset(true); setTimer(0); setCollisions(0); setStatus("idle"); }}>RESET SIMULATION</button>
                             <button 
                                 onClick={clearHighScores} 
                                 style={{ marginTop: '5px', backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>
@@ -355,7 +388,7 @@
                     <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
                         Hexel 2026 - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
                     </label>
-                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} />
+                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} />
                 </div>
             );
         };
