@@ -23,7 +23,12 @@ See if you can better your previous high score.
 
 --- ChangeLog ---
 
-02/07/2026 -- v2.1
+02/14/2026 -- v.2.2:
+  1. Upgraded sounds and added new sound files
+  2. Added intro button to start game and activate sounds
+  3. Fixed GOAL and START labels
+
+02/07/2026 -- v2.1:
   1. Introduced increasing the number of walls in response to increasing difficulty selections
   2. Fixed the game tile movement
   3. Increased the spawn rate of the obstacle tiles for the elite difficulty setting
