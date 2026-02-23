@@ -21,7 +21,12 @@ See if you can better your previous high score.
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
 
 
+
 --- ChangeLog ---
+
+02/22/2026 -- v.2.2.1
+  1. Added moving goal tile for ELITE difficulty
+  2. Added flashing goal tile for all difficulties
 
 02/14/2026 -- v.2.2:
   1. Upgraded sounds and added new sound files
@@ -47,8 +52,8 @@ Proposed additions for v.2:
 1. Change blockers from using whole hex tiles to walls using individual hex segments [DONE]
 2. Additional blocker walls with increasing difficulty [DONE] (investigate moving walls)
 3. Different gameboard sizes
-4. Better sound effects
+4. Better sound effects [DONE]
 5. Lighting effects
-6. Randomized start and end points (investigate moving end goal)
+6. Randomized start and end points (investigate moving end goal) [moving goal DONE]
 
 
