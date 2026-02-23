@@ -21,6 +21,29 @@
         .wall-blocked { color: #ff0000; font-weight: bold; }
         /* Style for the Start and Goal text labels */
         .tile-label { font-size: 12px; fill: #b614df; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+        .glowing-wall-animation {
+            animation: wall-pulse 2s infinite ease-in-out;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes wall-pulse {
+            0% { 
+                stroke-width: 2; 
+                opacity: 0.5; 
+                filter: drop-shadow(0 0 2px #00f2ff);
+            }
+            50% { 
+                stroke-width: 5; 
+                opacity: 1; 
+                filter: drop-shadow(0 0 8px #00f2ff);
+            }
+            100% { 
+                stroke-width: 2; 
+                opacity: 0.5; 
+                filter: drop-shadow(0 0 2px #00f2ff);
+            }
+        }    
     </style>
 </head>
 <body>
@@ -238,6 +261,14 @@
                     <text x={x} y={y} className="tile-label">
                         {isStart ? "START" : isGoal ? "GOAL" : ""}
                     </text>
+                    {isGoal && <polygon 
+                        points={points.map(p => `${p.x},${p.y}`).join(" ")} 
+                        fill="none" 
+                        stroke="#00ff00" 
+                        strokeWidth="4" 
+                        filter="url(#wall-glow-filter)" 
+                        className="glowing-wall-animation"/>
+                    }
                     {wallElements}
                 </g>
             );
@@ -462,6 +493,12 @@
                         </div>
                     </div>
                     <svg viewBox={`0 -30 ${window.innerWidth} ${window.innerHeight}`}>
+                        <defs>
+                            <filter id="wall-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
                         {tiles.map(t => (
                             <HexTile 
                                 key={`${t.q},${t.r}`} q={t.q} r={t.r} 
