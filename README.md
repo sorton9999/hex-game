@@ -27,6 +27,7 @@ See if you can better your previous high score.
 02/22/2026 -- v.2.2.1
   1. Added moving goal tile for ELITE difficulty
   2. Added flashing goal tile for all difficulties
+  3. Added rogue obstacle tiles in ELITE mode that start to appear after a few seconds of gametime
 
 02/14/2026 -- v.2.2:
   1. Upgraded sounds and added new sound files
