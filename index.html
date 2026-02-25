@@ -249,11 +249,16 @@
                     );
                 }
             });
+            // Convert points to a string format for the polygon SVG element
+            const pointsStr = points.map(p => `${p.x},${p.y}`).join(" ");
+
             // Render the hexagon tile with appropriate fill and wall lines, and handle click events for selection
+            // The render is a base polygon with a text label for start/goal, and an additional glowing polygon 
+            // if it's the move tile or a goal
             return (
                 <g>
                     <polygon 
-                        points={points.map(p => `${p.x},${p.y}`).join(" ")} 
+                        points={pointsStr} 
                         fill={isSelected ? "yellow" : (isGoal ? "#004411" : flashColor)} 
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
@@ -261,10 +266,10 @@
                     <text x={x} y={y} className="tile-label">
                         {isStart ? "START" : isGoal ? "GOAL" : ""}
                     </text>
-                    {isGoal && <polygon 
-                        points={points.map(p => `${p.x},${p.y}`).join(" ")} 
+                    {(isGoal || isSelected) && <polygon 
+                        points={pointsStr} 
                         fill="none" 
-                        stroke="#00ff00" 
+                        stroke={isGoal ? "#00ff00" : "lightblue"} 
                         strokeWidth="4" 
                         filter="url(#wall-glow-filter)" 
                         className="glowing-wall-animation"/>
@@ -287,7 +292,6 @@
             // State variables for game logic, including difficulty, player position, hazards, 
             // timer, collisions, and high scores
             const [diff, setDiff] = useState(DIFFICULTY_LEVELS.EASY);            
-
             const [selected, setSelected] = useState({ q: 0, r: 4 });
             const [goal, setGoal] = useState(GOAL_POS);
             const [flashMap, setFlashMap] = useState({});
@@ -313,6 +317,8 @@
                 setTimeout(() => setIsBlip(false), 300);
              };
  
+             // Function to generate the list of perimeter tiles at the maximum radius, 
+             // which are valid locations for the goal to move to
             const getPerimeterTiles = () => {
                 const tiles = [];
                 let q = 0, r = -RADIUS_LIMIT;
@@ -358,7 +364,7 @@
                 }, 3000);
 
                 return () => clearInterval(interval);
-            }, [perimeterTiles, diff, status]); // Now this reference is stable
+            }, [perimeterTiles, diff, status]);
 
              // Timer Effect: Increment the timer every second when the game is in "playing" status, 
              // and clear the interval when not
@@ -406,7 +412,7 @@
                 // 1. Check if the new position is within bounds before proceeding with collision checks
                 if (!inBounds) return;
                 // Handle reset state.
-                // We don't want to return here.  The reset is a new game state that we want to move into 
+                // We don't want to return from here.  The reset is a new game state that we want to move into 
                 // immediately on the next key press.
                 if (isReset) {
                     setIsReset(false);
