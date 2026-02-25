@@ -21,6 +21,29 @@
         .wall-blocked { color: #ff0000; font-weight: bold; }
         /* Style for the Start and Goal text labels */
         .tile-label { font-size: 12px; fill: #b614df; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+        .glowing-wall-animation {
+            animation: wall-pulse 2s infinite ease-in-out;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes wall-pulse {
+            0% { 
+                stroke-width: 2; 
+                opacity: 0.5; 
+                filter: drop-shadow(0 0 2px #00f2ff);
+            }
+            50% { 
+                stroke-width: 5; 
+                opacity: 1; 
+                filter: drop-shadow(0 0 8px #00f2ff);
+            }
+            100% { 
+                stroke-width: 2; 
+                opacity: 0.5; 
+                filter: drop-shadow(0 0 2px #00f2ff);
+            }
+        }    
     </style>
 </head>
 <body>
@@ -31,8 +54,8 @@
 
         const HEX_SIZE = 35;
         const RADIUS_LIMIT = 4;
-        const START_POS = { q: 0, r: 4 };
-        const GOAL_POS = { q: 0, r: -4 };
+        const START_POS = { q: 0, r: RADIUS_LIMIT };
+        const GOAL_POS = { q: 0, r: -RADIUS_LIMIT };
 
         // Helper to generate a unique key for a wall between two hexes
         const makeWallKey = (q1, r1, q2, r2) => [ `${q1},${r1}`, `${q2},${r2}` ].sort().join('|');
@@ -69,6 +92,7 @@
             makeWallKey(-3, 0, -2, 0)
         ]);
 
+        // Sound files for different events
         const SOUND_FILES = {
         collision: './sounds/mixkit-explainer-video-game-alert-sweep-236.wav',
         victory: './sounds/mixkit-winning-notification-2018.wav',
@@ -76,8 +100,15 @@
         start: './sounds/mixkit-arcade-rising-231.wav',
         reset: './sounds/mixkit-extra-bonus-in-a-video-game-2045.wav'
         };
-      
 
+        // Directions for neighboring tiles in axial coordinates (q, r)
+        const NEIGHBOR_TILES = [[1,0], [0,1], [-1,1], [-1,0], [0,-1], [1,-1]];
+
+        const PERMANENT_ROGUES = new Set();
+        const rogueInterval = 0;
+
+      
+        // SoundManager Component: Handles loading and playing sounds based on game events
         const SoundManager = ({isCollision, isVictory, isBlip, isReset}) => {
             const audioContext = useRef(null);
             const audioBuffer = useRef(null);
@@ -87,7 +118,7 @@
             const [isPlaying, setIsPlaying] = useState(false);
             const [isUnlocked, setIsUnlocked] = useState(false);
 
-
+            // Function to load a sound file and decode it into an AudioBuffer
             const loadSound = (soundFile) => {
                 audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
                 gainNode.current = audioContext.current.createGain();
@@ -103,6 +134,7 @@
                 .catch(err => console.error("Error loading audio", err));
             };
 
+            // Function to play a sound by name, ensuring it doesn't overlap if already playing
             const playSound = (name) => {
                 if (!soundBuffers.current[name] || isPlaying) return;
                 sourceNode.current = audioContext.current.createBufferSource();
@@ -113,6 +145,7 @@
                 sourceNode.current.onended = () => setIsPlaying(false);
             };
 
+            // Function to stop the currently playing sound
             const stopSound = () => {
                 if (sourceNode.current) {
                     sourceNode.current.stop();
@@ -120,6 +153,7 @@
                 }
             };
 
+            // Load all necessary sounds on component mount
             useEffect(() => {
                 loadSound(SOUND_FILES.blip);
                 loadSound(SOUND_FILES.collision);
@@ -127,22 +161,27 @@
                 loadSound(SOUND_FILES.reset);
             }, []);
 
+            // Play specific sounds based on game events
+            // Collision sound
             useEffect(() => {
                 if (isCollision) playSound(SOUND_FILES.collision);
             }, [isCollision]);
-
+            // Victory sound
             useEffect(() => {
                 if (isVictory) playSound(SOUND_FILES.victory);
             }, [isVictory]);
-
+            // Blip sound for UI interactions
             useEffect(() => {
                 if (isBlip) playSound(SOUND_FILES.blip);
             }, [isBlip]);
-
+            // Reset sound when the game is reset
             useEffect(() => {
                 if (isReset) playSound(SOUND_FILES.reset);
             }, [isReset]);
 
+            // Unlock audio on first user interaction
+            // Many browsers require a user interaction to unlock audio playback, 
+            // so we display a start button until the user clicks to enable sound
             if (!isUnlocked) {
                 return (
                     <div 
@@ -154,21 +193,29 @@
                                 });
                             }
                         }} 
-                        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', padding: '20px 40px', backgroundColor: '#00ff00', color: '#000', borderRadius: '8px', cursor: 'pointer', zIndex: 20 }}>
+                        style={{ position: 'absolute', top: '50%', left: '50%', 
+                        transform: 'translate(-50%, -50%)', padding: '20px 40px', 
+                        backgroundColor: '#00ff00', color: '#000', borderRadius: '8px', 
+                        cursor: 'pointer', zIndex: 20 }}>
                         CLICK TO START SIMULATION
                     </div>
                 );
             }
-            return null; // This component doesn't render anything
+            // This component does not render anything visible once audio is unlocked, 
+            // it just manages sound effects in the background
+            return null;
         };
 
+        // HexTile Component: Represents each hexagonal tile on the grid, handling its rendering and behavior
         const HexTile = ({ q, r, isSelected, diff, isGoal, onFlashChange, onSelect }) => {
             const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.03)");
+            const [isRogue, setRogue] = useState(false);
             const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
             const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + window.innerHeight / 2;
             const isStart = q === START_POS.q && r === START_POS.r;
             const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
-            
+
+            // Handle flashing behavior for hazard tiles
             useEffect(() => {
                 if (isGoal) return;
                 const trigger = () => {
@@ -181,21 +228,34 @@
                     }, diff.duration * 1000);
                 };
                 // Use diff.spawnRate for faster reappearance
+                // Add a random-ness to the interval to make it less predictable
                 const timer = setInterval(trigger, (4000 * diff.spawnRate) + Math.random() * 6000);
                 return () => clearInterval(timer);
             }, [q, r, isGoal]);
 
+            // Handle rogue tile behavior for ELITE difficulty, where certain tiles can become 
+            // permanently hazardous
+            useEffect(() => {
+                if (isGoal || isSelected) return;
+                const rogue = () => Math.floor(Math.random() * 5) + 1 === 1 
+                    && !PERMANENT_ROGUES.has(`${q},${r}`) && PERMANENT_ROGUES.size < 5
+                    && !(START_POS.q === q && START_POS.r === r)
+                    && rogueInterval % 10 === 0 && diff.label === "ELITE";
+                if (rogue()) { setRogue(true); PERMANENT_ROGUES.add(`${q},${r}`); }
+                setTimeout(() => { setRogue(false); rogueInterval += 1; }, 1000);
+            }, [q, r, isGoal, isSelected, rogueInterval]);
+
+            // Calculate the vertices of the hexagon based on its center (x, y)
             const points = Array.from({length: 6}, (_, i) => {
                 const a = (Math.PI / 180) * (60 * i);
                 return { x: x + HEX_SIZE * Math.cos(a), y: y + HEX_SIZE * Math.sin(a) };
             });
-
+            // Determine fill color based on tile state: selected, goal, or flashing hazard
             let fill = isSelected ? "yellow" : flashColor;
             if (isGoal && !isSelected) fill = "#004411";
             // Draw Wall Lines: Only draw if the wall exists between this tile and a neighbor
             const wallElements = [];
-            const neighbors = [[1,0], [1,-1], [0,-1], [-1,0], [-1,1], [0,1]];
-            neighbors.forEach(([dq, dr], i) => {
+            NEIGHBOR_TILES.forEach(([dq, dr], i) => {
                 if (wallsInUse.has(makeWallKey(q, r, q + dq, r + dr))) {
                     // Each hex side corresponds to corners (i, i+1)
                     const p1 = points[i];
@@ -206,34 +266,53 @@
                     );
                 }
             });
-
+            // Convert points to a string format for the polygon SVG element
+            const pointsStr = points.map(p => `${p.x},${p.y}`).join(" ");
+            // Check if this tile is a permanent rogue tile, which should be rendered 
+            // with a darker fill and a red glow
+            const hasRogue = PERMANENT_ROGUES.has(`${q},${r}`);
+            // Render the hexagon tile with appropriate fill and wall lines, and handle click events for selection
+            // The render is a base polygon with a text label for start/goal, and an additional glowing polygon 
+            // if it's the move tile or a goal
             return (
                 <g>
                     <polygon 
-                        points={points.map(p => `${p.x},${p.y}`).join(" ")} 
-                        fill={isSelected ? "yellow" : (isGoal ? "#004411" : flashColor)} 
+                        points={pointsStr} 
+                        fill={isSelected ? "yellow" : (isGoal ? "#004411" : hasRogue ? "#333" : flashColor)} 
                         stroke="#222" 
                         onClick={() => onSelect(q, r)} 
                     />
                     <text x={x} y={y} className="tile-label">
                         {isStart ? "START" : isGoal ? "GOAL" : ""}
                     </text>
+                    {(isGoal || isSelected || hasRogue) && <polygon 
+                        points={pointsStr} 
+                        fill="none" 
+                        stroke={isGoal ? "#00ff00" : hasRogue ? "red" : "lightblue"} 
+                        strokeWidth="4" 
+                        filter="url(#wall-glow-filter)" 
+                        className="glowing-wall-animation"/>
+                    }
                     {wallElements}
                 </g>
             );
         };
 
+        // App Component: Main component that manages game state, user interactions, and renders the UI and hex grid
         const App = () => {
 
+            // Define difficulty levels with their respective spawn rates and hazard durations
             const DIFFICULTY_LEVELS = {
             EASY: { label: "EASY", spawnRate: 1, duration: 1.5 },
             HARD: { label: "HARD", spawnRate: 0.5, duration: 0.8 },
             ELITE: { label: "ELITE", spawnRate: 0.2, duration: 0.3 }
             };
 
+            // State variables for game logic, including difficulty, player position, hazards, 
+            // timer, collisions, and high scores
             const [diff, setDiff] = useState(DIFFICULTY_LEVELS.EASY);            
-
             const [selected, setSelected] = useState({ q: 0, r: 4 });
+            const [goal, setGoal] = useState(GOAL_POS);
             const [flashMap, setFlashMap] = useState({});
             const [timer, setTimer] = useState(0);
             const [collisions, setCollisions] = useState(0);
@@ -247,7 +326,7 @@
             const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
             const [bestCollisions, setBestCollisions] = useState(() => localStorage.getItem('hex_best_hits') || '--');
 
-
+            // Function to clear high scores from localStorage and reset the displayed values
             const clearHighScores = () => {
                 localStorage.removeItem('hex_best_time');
                 localStorage.removeItem('hex_best_hits');
@@ -257,12 +336,81 @@
                 setTimeout(() => setIsBlip(false), 300);
              };
 
+             const onReset = () => {
+                setSelected({q:0,r:4}); 
+                setGoal({q:0,r:-4}); 
+                setIsReset(true); 
+                setTimer(0); 
+                setCollisions(0); 
+                setStatus("idle");
+                PERMANENT_ROGUES.clear();
+                rogueInterval = 0;
+             };
+ 
+             // Function to generate the list of perimeter tiles at the maximum radius, 
+             // which are valid locations for the goal to move to
+            const getPerimeterTiles = () => {
+                const tiles = [];
+                let q = 0, r = -RADIUS_LIMIT;
+                for (let i = 0; i < 6; i++) {
+                    for (let j = 0; j < RADIUS_LIMIT; j++) {
+                        tiles.push({ q, r });
+                        q += NEIGHBOR_TILES[i][0];
+                        r += NEIGHBOR_TILES[i][1];
+                    }
+                }
+                return tiles;
+            };
+
+            // Memoize the tiles so the reference stays the same across renders
+            const perimeterTiles = useMemo(() => getPerimeterTiles(), []); 
+
+            // Effect to move the goal every 3 seconds, picking a random tile from the perimeter
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (status === "idle" || status === "won") return;
+                     // Only move goal in ELITE mode
+                    if (diff.label === "HARD" || diff.label === "EASY") return;
+                    // Ensure tiles exist before picking one
+                    if (perimeterTiles.length === 0) return;
+
+                    // Pick a random tile from the perimeter to move the goal to
+                    const nextTileIndex = perimeterTiles[Math.floor(Math.random() * perimeterTiles.length)];
+
+                    // If the new goal position is the same as the player's current position, skip this move
+                    if (nextTileIndex.q === selected.q && nextTileIndex.r === selected.r) {
+                        return;
+                    }
+                    // If the new goal position is the same as the start position, skip this move
+                    if (nextTileIndex.q === START_POS.q && nextTileIndex.r === START_POS.r) {
+                        return;
+                    }
+                    // If the new goal position is a permanent rogue tile, skip this move
+                    if (PERMANENT_ROGUES.has(`${nextTileIndex.q},${nextTileIndex.r}`)) {
+                        return;
+                    }
+
+                    // Set the next goal move location
+                    const [nextQ, nextR] = [nextTileIndex.q, nextTileIndex.r];
+
+                    setGoal({ q: nextQ, r: nextR });
+ 
+                    console.log('Moved goal to:', { q: nextQ, r: nextR });
+                }, 3000);
+
+                return () => clearInterval(interval);
+            }, [perimeterTiles, diff, status]);
+
+             // Timer Effect: Increment the timer every second when the game is in "playing" status, 
+             // and clear the interval when not
             useEffect(() => {
                 let interval;
                 if (status === "playing") interval = setInterval(() => setTimer(t => t + 1), 1000);
                 return () => clearInterval(interval);
             }, [status]);
 
+            // Function to update high scores in localStorage if the current time or collisions are 
+            // better than the stored values
             const updateHighScores = useCallback(() => {
                 const currentBestTime = localStorage.getItem('hex_best_time');
                 const currentBestHits = localStorage.getItem('hex_best_hits');
@@ -278,13 +426,17 @@
                 }
             }, [timer, collisions]);
 
+            // Effect to check for victory condition whenever the selected tile or game status changes, 
+            // and update high scores if the player has won
             useEffect(() => {
-                if (selected.q == GOAL_POS.q && selected.r == GOAL_POS.r && status === "won") {
+                if (selected.q == goal.q && selected.r == goal.r && status === "won") {
                     setIsVictory(true);
                     updateHighScores();
                 }
             }, [selected, status, updateHighScores]);
 
+            // Function to handle player movement based on arrow key inputs, checking for collisions 
+            // with walls and hazards,
             const move = useCallback((dq, dr) => {
                 if (status === "won") { return; }
                 if (status === "idle") { setStatus("playing"); }
@@ -292,26 +444,29 @@
                 const coordKey = `${nQ},${nR}`;
                 const inBounds = Math.abs(nQ) <= RADIUS_LIMIT && Math.abs(nR) <= RADIUS_LIMIT && Math.abs(-nQ-nR) <= RADIUS_LIMIT;
                 const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
-                
+                // 1. Check if the new position is within bounds before proceeding with collision checks
                 if (!inBounds) return;
-
+                // Handle reset state.
+                // We don't want to return from here.  The reset is a new game state that we want to move into 
+                // immediately on the next key press.
                 if (isReset) {
                     setIsReset(false);
-                    return;
                 }
 
-                // 1. Check if moving through a wall
-                if (wallsInUse.has(makeWallKey(selected.q, selected.r, nQ, nR))) {
+                // 2. Check if moving through a wall
+                if (wallsInUse.has(makeWallKey(selected.q, selected.r, nQ, nR)) ||
+                    PERMANENT_ROGUES.has(coordKey)) {
                     setCollisions(h => h + 1); setIsCollision(true); return;
                 }
+                // If there was a collision but the player has now moved to a different tile, reset the collision state
                 else if (isCollision) {
                     setIsCollision(false); return;
                 }
 
-                // 2. Check boundaries
+                // 3. Check boundaries
                 if (Math.max(Math.abs(nQ), Math.abs(nR), Math.abs(-nQ-nR)) > RADIUS_LIMIT) return;
 
-                // 3. Check color hazards
+                // 4. Check color hazards
                 if (flashMap[`${nQ},${nR}`]) {
                     setCollisions(h => h + 1); setIsCollision(true); return;
                 }
@@ -319,14 +474,16 @@
                     setIsCollision(false); return;
                 }
 
+                // If all checks passed, update the selected position
                 setSelected({ q: nQ, r: nR });
-                if (nQ === GOAL_POS.q && nR === GOAL_POS.r) {
+                if (nQ === goal.q && nR === goal.r) {
                     setIsVictory(true);
                     setStatus("won");
                     setTimeout(() => setIsVictory(false), 1000);
                 }
             }, [selected, flashMap, status]);
 
+            // Keyboard event listener for arrow keys to move the player, and cleanup on component unmount
             useEffect(() => {
                 const keys = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0] };
                 const listener = (e) => keys[e.key] && move(...keys[e.key]);
@@ -334,6 +491,8 @@
                 return () => window.removeEventListener('keydown', listener);
             }, [move]);
 
+            // Generate the list of hex tiles to render based on the defined radius limit, 
+            // using axial coordinates (q, r)
             const tiles = useMemo(() => {
                 const arr = [];
                 for (let q = -RADIUS_LIMIT; q <= RADIUS_LIMIT; q++) {
@@ -342,6 +501,8 @@
                 return arr;
             }, []);
 
+            // Render the UI, including the timer, collision count, high scores, difficulty selector, 
+            // reset button, and the hex grid with tiles
             return (
                 <div>
                     <div className="ui">
@@ -365,7 +526,7 @@
                                     ))}
                                 </select>
                             </div>
-                            <button onClick={() => { setSelected({q:0,r:4}); setIsReset(true); setTimer(0); setCollisions(0); setStatus("idle"); }}>RESET SIMULATION</button>
+                            <button onClick={() => { onReset() }}>RESET SIMULATION</button>
                             <button 
                                 onClick={clearHighScores} 
                                 style={{ marginTop: '5px', backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>
@@ -374,10 +535,16 @@
                         </div>
                     </div>
                     <svg viewBox={`0 -30 ${window.innerWidth} ${window.innerHeight}`}>
+                        <defs>
+                            <filter id="wall-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
                         {tiles.map(t => (
                             <HexTile 
                                 key={`${t.q},${t.r}`} q={t.q} r={t.r} 
-                                isGoal={t.q === GOAL_POS.q && t.r === GOAL_POS.r}
+                                isGoal={t.q === goal.q && t.r === goal.r}
                                 diff={diff}
                                 isSelected={selected.q === t.q && selected.r === t.r}
                                 onFlashChange={(q, r, act) => setFlashMap(p => ({...p, [`${q},${r}`]: act}))}
@@ -386,13 +553,14 @@
                         ))}
                     </svg>
                     <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
-                        Hexel 2026 - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
+                        Hexel 2026 (v.2.2.1) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
                     </label>
                     <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} />
                 </div>
             );
         };
 
+        // Render the App component into the root div
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>

@@ -1,9 +1,9 @@
 Hexel 2026 -- A simple hex traversal game developed with React
 
-This game was vibe-coded using AI tools.  Nothing more than a search term entered into vanilla Google.  I asked a simple question, "How do you implement a hex-based gameboard and what development framework will work best?".  I continued asking questions and following prompts given by the AI assistant and came up with this game.
+This game was vibe-coded using AI tools.  Nothing more than a search term entered into vanilla Google.  I asked a simple question, "How do you implement a hex-based gameboard and what development framework will work best?".  I continued asking questions and followed prompts given by the AI assistant and came up with this game.
 
-I took my years of experience in software engineering and working with general software algorithms and came up with this implementation in a language I have next to no experience in.  It was a curious exercise that on its surface came out quite well.  The way I came up with this
-implementation was really quite by accident.  It started with a simple query and by using AI prompts and additional queries it morphed into something I didn't start out to make.
+I followed suggestions given by Google and came up with this implementation in a language I have next to no experience in.  It was a curious exercise that on its surface came out pretty good.  The way I came up with this
+implementation was accidental.  It started with a simple query and by using AI prompts and additional queries it morphed into something I didn't start out to make.  The prompts gave me good ideas of my own that I implemented to make this game a bit more fun.
 
 So this is a simple hex game.  You use keyboard arrows to move a hex tile located at the bottom of a hex gameboard to a goal at the opposite end of the board.  While moving the tile, the gameboard has obstacles to avoid.  These obstacles consist of immovable hex walls and randomly flashing hex tiles.  Your fastest time and least number of collisions are scored.
 
@@ -21,7 +21,13 @@ See if you can better your previous high score.
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
 
 
+
 --- ChangeLog ---
+
+02/22/2026 -- v.2.2.1
+  1. Added moving goal tile for ELITE difficulty
+  2. Added flashing goal tile for all difficulties
+  3. Added rogue obstacle tiles in ELITE mode that start to appear after a few seconds of gametime
 
 02/14/2026 -- v.2.2:
   1. Upgraded sounds and added new sound files
@@ -47,8 +53,8 @@ Proposed additions for v.2:
 1. Change blockers from using whole hex tiles to walls using individual hex segments [DONE]
 2. Additional blocker walls with increasing difficulty [DONE] (investigate moving walls)
 3. Different gameboard sizes
-4. Better sound effects
+4. Better sound effects [DONE]
 5. Lighting effects
-6. Randomized start and end points (investigate moving end goal)
+6. Randomized start and end points (investigate moving end goal) [moving goal DONE]
 
 
