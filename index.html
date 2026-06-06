@@ -385,7 +385,6 @@
             const levelRef = useRef(1);
             const playerMovesRef = useRef(0);
             const perimeterTilesRef = useRef([]);
-            const goalMovementIntervalRef = useRef(null);
             
             // High Score State (Fastest Time / Least Collisions)
             const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
@@ -507,53 +506,51 @@
  
              // Effect to move the goal periodically once the player has moved.
              // Timer does not start until the first player move, and it uses a
-             // constant 3 second interval.
-             useEffect(() => {
-                 if (status !== "playing") return;
-                 if (playerMoves < 1) return;
-                 if (goalMovementIntervalRef.current) return;
- 
-                 const interval = setInterval(() => {
-                     if (statusRef.current !== "playing") return;
-                     if (levelRef.current < 3) return;
-                     if (playerMovesRef.current < 3) return;
-                     const tiles = perimeterTilesRef.current;
-                     if (!tiles || tiles.length === 0) return;
- 
-                    // Try several random picks to find a valid perimeter tile this tick
-                    let attempts = 12;
-                    let chosen = null;
-                    while (attempts-- > 0) {
-                        const cand = tiles[Math.floor(Math.random() * tiles.length)];
-                        if (!cand) continue;
-                        if (cand.q === selectedRef.current.q && cand.r === selectedRef.current.r) continue;
-                        if (cand.q === START_POS.q && cand.r === START_POS.r) continue;
-                        if (cand.q === goalRef.current.q && cand.r === goalRef.current.r) continue;
-                        if (PERMANENT_ROGUES.has(`${cand.q},${cand.r}`)) continue;
-                        chosen = cand; break;
+             // longer interval when the board is larger than the base radius.
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (status === "idle" || status === "won") return;
+                     // Only move goal in ELITE mode
+                    //if (diff.label === "HARD" || diff.label === "EASY") return;
+                    // If less than level 3, skip
+                    if (levelRef.current < 3) return;
+
+                    // If player has not moved at least 3 hexes, skip
+                    if (playerMovesRef.current < 3) return;
+
+                    // Ensure tiles exist before picking one
+                    if (perimeterTiles.length === 0) return;
+
+                    // Pick a random tile from the perimeter to move the goal to
+                    const nextTileIndex = perimeterTiles[Math.floor(Math.random() * perimeterTiles.length)];
+
+                    // If the new goal position is the same as the player's current position, skip this move
+                    if (nextTileIndex.q === selected.q && nextTileIndex.r === selected.r) {
+                        return;
                     }
-                    if (!chosen) return; // no valid tile found this tick
-                    const key = `${chosen.q},${chosen.r}`;
-                    TEMP_PROTECTED.clear();
-                    TEMP_PROTECTED.add(key);
-                    setFlashMap(p => {
-                        if (!p[key]) return p;
-                        const copy = { ...p };
-                        delete copy[key];
-                        return copy;
-                    });
-                    setGoal({ q: chosen.q, r: chosen.r });
-                    console.log('Moved goal to:', { q: chosen.q, r: chosen.r });
-                 }, 3000);
- 
-                 goalMovementIntervalRef.current = interval;
-                 return () => {
-                     if (goalMovementIntervalRef.current) {
-                         clearInterval(goalMovementIntervalRef.current);
-                         goalMovementIntervalRef.current = null;
-                     }
-                 };
-             }, [playerMoves, status, level]);
+                    // If the new goal position is the same as the start position, skip this move
+                    if (nextTileIndex.q === START_POS.q && nextTileIndex.r === START_POS.r) {
+                        return;
+                    }
+                    // If the new goal position is a permanent rogue tile, skip this move
+                    if (PERMANENT_ROGUES.has(`${nextTileIndex.q},${nextTileIndex.r}`)) {
+                        return;
+                    }
+
+                    // Set the next goal move location
+                    const [nextQ, nextR] = [nextTileIndex.q, nextTileIndex.r];
+
+                    setGoal({ q: nextQ, r: nextR });
+
+                    console.log('Moved goal to:', { q: nextQ, r: nextR });
+                }, 3000);
+
+                return () => clearInterval(interval);
+            }, [perimeterTiles, status]);
+
+
+            // Timer Effect: Increment the timer every second while the game is in the "playing" state,
+            // and clear the timer when not playing.
             useEffect(() => {
                 let interval;
                 if (status === "playing") interval = setInterval(() => setTimer(t => t + 1), 1000);
@@ -821,7 +818,7 @@
                     </div>
                     {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
                     <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
-                        Hexel 2026 (v.2.2.1) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
+                        Hexel 2026 (v.2.5) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
                     </label>
                     <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} />
                 </div>
