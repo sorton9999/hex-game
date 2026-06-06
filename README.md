@@ -24,6 +24,14 @@ See if you can better your previous high score.
 
 --- ChangeLog ---
 
+06/06/2026 -- v.2.5 [Claude Haiku 4.5, GPT-5 Mini]
+  1. Changed difficulty selection to increasing difficulty levels
+  2. Added shaking board starting at level 5+
+  3. Added game area flashing at level 8+
+  4. Added additional blocking tiles at level 4+
+  5. Added start sound
+  6. Added player appearance transitions and sound
+
 02/22/2026 -- v.2.2.1
   1. Added moving goal tile for ELITE difficulty
   2. Added flashing goal tile for all difficulties
