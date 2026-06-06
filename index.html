@@ -108,7 +108,7 @@
 
       
         // SoundManager Component: Handles loading and playing sounds based on game events
-        const SoundManager = ({isCollision, isVictory, isBlip, isReset}) => {
+        const SoundManager = ({isCollision, isVictory, isBlip, isReset, isStartAppear, onStartSoundEnd}) => {
             const audioContext = useRef(null);
             const audioBuffer = useRef(null);
             const sourceNode = useRef(null);
@@ -133,15 +133,20 @@
                 .catch(err => console.error("Error loading audio", err));
             };
 
-            // Function to play a sound by name, ensuring it doesn't overlap if already playing
+            // Function to play a sound by name, returning a Promise that resolves when it ends
             const playSound = (name) => {
-                if (!soundBuffers.current[name] || isPlaying) return;
-                sourceNode.current = audioContext.current.createBufferSource();
-                sourceNode.current.buffer = soundBuffers.current[name];
-                sourceNode.current.connect(gainNode.current);
-                sourceNode.current.start(0);
-                setIsPlaying(true);
-                sourceNode.current.onended = () => setIsPlaying(false);
+                return new Promise((resolve) => {
+                    if (!soundBuffers.current[name] || isPlaying) return resolve();
+                    sourceNode.current = audioContext.current.createBufferSource();
+                    sourceNode.current.buffer = soundBuffers.current[name];
+                    sourceNode.current.connect(gainNode.current);
+                    sourceNode.current.start(0);
+                    setIsPlaying(true);
+                    sourceNode.current.onended = () => {
+                        setIsPlaying(false);
+                        resolve();
+                    };
+                });
             };
 
             // Function to stop the currently playing sound
@@ -154,6 +159,7 @@
 
             // Load all necessary sounds on component mount
             useEffect(() => {
+                loadSound(SOUND_FILES.start);
                 loadSound(SOUND_FILES.blip);
                 loadSound(SOUND_FILES.collision);
                 loadSound(SOUND_FILES.victory);
@@ -161,8 +167,9 @@
             }, []);
 
             // Play specific sounds based on game events
+
             // Collision sound
-            useEffect(() => {
+           useEffect(() => {
                 if (isCollision) playSound(SOUND_FILES.collision);
             }, [isCollision]);
             // Victory sound
@@ -178,6 +185,11 @@
                 if (isReset) playSound(SOUND_FILES.reset);
             }, [isReset]);
 
+            // Play reset-like sound when player spawn is appearing
+            useEffect(() => {
+                if (isStartAppear) playSound(SOUND_FILES.reset);
+            }, [isStartAppear]);
+
             // Unlock audio on first user interaction
             // Many browsers require a user interaction to unlock audio playback, 
             // so we display a start button until the user clicks to enable sound
@@ -186,17 +198,23 @@
                     <div 
                         onClick={() => {
                             if (audioContext.current) {
-                                audioContext.current.resume().then(() => {
+                                audioContext.current.resume().then(async () => {
                                     setIsUnlocked(true);
-                                    playSound(SOUND_FILES.start);
+                                    // Play the start sound and notify the parent when finished
+                                    await playSound(SOUND_FILES.start);
+                                    if (typeof onStartSoundEnd === 'function') onStartSoundEnd();
                                 });
                             }
                         }} 
                         style={{ position: 'absolute', top: '50%', left: '50%', 
                         transform: 'translate(-50%, -50%)', padding: '20px 40px', 
                         backgroundColor: '#00ff00', color: '#000', borderRadius: '8px', 
+                        fontWeight: 'bold', fontSize: '20px',
                         cursor: 'pointer', zIndex: 20 }}>
                         CLICK TO START SIMULATION
+                        <div style={{ color: '#ff0000', fontWeight: 'bold', fontSize: '12px', marginTop: '10px' }}>
+                            WARNING: Contains flashing game area after level 3
+                        </div>
                     </div>
                 );
             }
@@ -206,7 +224,7 @@
         };
 
         // HexTile Component: Represents each hexagonal tile on the grid, handling its rendering and behavior
-        const HexTile = ({ q, r, isSelected, diff, isGoal, onFlashChange = () => {}, onSelect = () => {}, isPreview = false, startPos }) => {
+        const HexTile = ({ q, r, isSelected, diff, isGoal, onFlashChange = () => {}, onSelect = () => {}, isPreview = false, startPos, spawnActive = false, spawnProgress = 0 }) => {
             const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.03)");
             const [isRogue, setRogue] = useState(false);
             const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
@@ -249,9 +267,29 @@
                 const a = (Math.PI / 180) * (60 * i);
                 return { x: x + HEX_SIZE * Math.cos(a), y: y + HEX_SIZE * Math.sin(a) };
             });
-            // Determine fill color based on tile state: selected, goal, or flashing hazard
+            // Determine fill color based on tile state: selected, goal, flashing hazard, or spawn animation
             let fill = isSelected ? "yellow" : flashColor;
             if (isGoal && !isSelected) fill = "#004411";
+            // If spawn animation is active for the start tile, override fill to show quick blue/yellow flashes
+            if (spawnActive && isStart) {
+                const t = Math.max(0, Math.min(1, spawnProgress));
+                const flashes = 8; // number of quick color changes over the duration
+                const phase = Math.floor(t * flashes);
+                const isBlue = phase % 2 === 0;
+                const blue = [0, 120, 255];
+                const yellow = [255, 215, 0];
+                const flashColorRgb = isBlue ? blue : yellow;
+                // Blend the flash color toward yellow over time so final color is solid yellow at t=1
+                const mix = t; // 0..1
+                const target = yellow;
+                const blended = [
+                    Math.round(flashColorRgb[0] + (target[0] - flashColorRgb[0]) * mix),
+                    Math.round(flashColorRgb[1] + (target[1] - flashColorRgb[1]) * mix),
+                    Math.round(flashColorRgb[2] + (target[2] - flashColorRgb[2]) * mix)
+                ];
+                const opacity = Math.max(0.05, t);
+                fill = `rgba(${blended[0]},${blended[1]},${blended[2]},${opacity})`;
+            }
             // Draw Wall Lines: Only draw if the wall exists between this tile and a neighbor
             const wallElements = [];
             NEIGHBOR_TILES.forEach(([dq, dr], i) => {
@@ -277,7 +315,7 @@
                 <g>
                     <polygon 
                         points={pointsStr} 
-                        fill={isSelected ? "yellow" : (isGoal ? "#004411" : hasRogue ? "#333" : flashColor)} 
+                        fill={fill} 
                         stroke="#222" 
                         onClick={() => !isPreview && onSelect(q, r)} 
                     />
@@ -381,6 +419,14 @@
             const [collisionJolt, setCollisionJolt] = useState({ x: 0, y: 0 });
             const collisionTimeouts = useRef([]);
             const [redFlash, setRedFlash] = useState(false);
+            // Player spawn / start animation state
+            const [playerActive, setPlayerActive] = useState(false);
+            const [startSpawnActive, setStartSpawnActive] = useState(false);
+            const [startSpawnProgress, setStartSpawnProgress] = useState(0);
+            const spawnRaf = useRef(null);
+            // Play reset-like sound partway through spawn
+            const [playResetOnSpawn, setPlayResetOnSpawn] = useState(false);
+            const spawnTimeoutRef = useRef([]);
             const statusRef = useRef("idle");
             const levelRef = useRef(1);
             const playerMovesRef = useRef(0);
@@ -459,6 +505,15 @@
 
             useEffect(() => {
                 setDiff(getDifficultyForLevel(level));
+            }, [level]);
+
+            // Ensure a permanent rogue exists at the board center (0,0) on level 1 only
+            useEffect(() => {
+                if (level === 1) {
+                    PERMANENT_ROGUES.add(`0,0`);
+                } else {
+                    PERMANENT_ROGUES.delete(`0,0`);
+                }
             }, [level]);
  
              // Function to generate the list of perimeter tiles at the maximum radius, 
@@ -609,6 +664,48 @@
                 };
             }, []);
 
+            // Clean up any spawn RAF and timeouts on unmount
+            useEffect(() => {
+                return () => {
+                    if (spawnRaf.current) cancelAnimationFrame(spawnRaf.current);
+                    spawnTimeoutRef.current.forEach(id => clearTimeout(id));
+                    spawnTimeoutRef.current = [];
+                };
+            }, []);
+
+            // Start the 2s spawn animation: quick blue/yellow flashes, then enable player
+            const startSpawnAnimation = () => {
+                const duration = 2000; // ms
+                const startTime = performance.now();
+                setStartSpawnActive(true);
+                setStartSpawnProgress(0);
+                // schedule reset sound to play before the transition completes (e.g. at 1.2s)
+                spawnTimeoutRef.current.forEach(id => clearTimeout(id));
+                spawnTimeoutRef.current = [];
+                const resetDelay = 1200;
+                const t1 = setTimeout(() => {
+                    setPlayResetOnSpawn(true);
+                    const t2 = setTimeout(() => setPlayResetOnSpawn(false), 300);
+                    spawnTimeoutRef.current.push(t2);
+                }, resetDelay);
+                spawnTimeoutRef.current.push(t1);
+                const step = (now) => {
+                    const t = Math.max(0, Math.min(1, (now - startTime) / duration));
+                    setStartSpawnProgress(t);
+                    if (t >= 1) {
+                        setStartSpawnActive(false);
+                        setPlayerActive(true);
+                        // clear any pending spawn timeouts
+                        spawnTimeoutRef.current.forEach(id => clearTimeout(id));
+                        spawnTimeoutRef.current = [];
+                        spawnRaf.current = null;
+                        return;
+                    }
+                    spawnRaf.current = requestAnimationFrame(step);
+                };
+                spawnRaf.current = requestAnimationFrame(step);
+            };
+
             // Schedule multiple shakes and an optional red flash on collision
             const triggerCollisionEffects = () => {
                 // clear previous scheduled timers
@@ -727,6 +824,8 @@
                             onSelect={showHazards ? (q, r) => status === "playing" && !flashMap[`${q},${r}`] && setSelected({q, r}) : () => {}}
                             isPreview={!showHazards}
                             startPos={START_POS}
+                            spawnActive={startSpawnActive}
+                            spawnProgress={startSpawnProgress}
                         />
                     ))}
                 </svg>
@@ -762,7 +861,7 @@
                                 <div style={{ marginBottom: '12px' }}>Fastest time: {bestTime !== '--' ? `${bestTime}s` : '--'}</div>
                                 <div style={{ marginBottom: '12px' }}>Collisions: {bestCollisions !== '--' ? bestCollisions : '--'}</div>
                                 <div style={{ marginBottom: '18px' }}>Continue at Elite difficulty?</div>
-                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                                     <button style={{ padding: '10px 16px', background: '#0f0', color: '#000', border: 'none', cursor: 'pointer' }} onClick={() => startNextLevel(4)}>YES</button>
                                     <button style={{ padding: '10px 16px', background: '#330000', color: '#ff4444', border: '1px solid #ff4444', cursor: 'pointer' }} onClick={() => { setShowContinuePrompt(false); setStatus('stopped'); }}>NO</button>
                                 </div>
@@ -771,7 +870,7 @@
                     )}
                     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
                         {renderBoard({
-                            boardSelected: selected,
+                            boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
                             boardGoal: goal,
                             boardDiff: diff,
                             showHazards: true,
@@ -820,7 +919,7 @@
                     <label style={{ position: 'absolute', bottom: '5px', width: '100%', textAlign: 'left', color: '#555', fontSize: '12px' }}>
                         Hexel 2026 (v.2.5) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
                     </label>
-                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} />
+                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} onStartSoundEnd={() => { startSpawnAnimation(); }} />
                 </div>
             );
         };
