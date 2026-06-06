@@ -13,11 +13,11 @@ See if you can better your previous high score.
 
 --- Screenshots ---
 
-(Hexel 2026 v.1)
+(Hexel 2026 v.1.X)
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.1-start.png?raw=true "Hexel 2026 v.1")
 
 
-(Hexel 2026 v.2)
+(Hexel 2026 v.2.X)
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
 
 
@@ -32,27 +32,27 @@ See if you can better your previous high score.
   5. Added start sound
   6. Added player appearance transitions and sound
 
-02/22/2026 -- v.2.2.1
+02/22/2026 -- v.2.2.1 [Gemini 2.5 Flash]
   1. Added moving goal tile for ELITE difficulty
   2. Added flashing goal tile for all difficulties
   3. Added rogue obstacle tiles in ELITE mode that start to appear after a few seconds of gametime
 
-02/14/2026 -- v.2.2:
+02/14/2026 -- v.2.2: [Gemini 2.5 Flash]
   1. Upgraded sounds and added new sound files
   2. Added intro button to start game and activate sounds
   3. Fixed GOAL and START labels
 
-02/07/2026 -- v2.1:
+02/07/2026 -- v2.1: [Gemini 2.5 Flash]
   1. Introduced increasing the number of walls in response to increasing difficulty selections
   2. Fixed the game tile movement
   3. Increased the spawn rate of the obstacle tiles for the elite difficulty setting
 
-02/01/2026 -- v.2:
+02/01/2026 -- v.2: [Gemini 2.5 Flash]
   1. New walls replacing blocking hex tiles
   2. Better difficulty algorithm
   3. Additional labels for things
 
-01/31/2026 -- v.1:
+01/31/2026 -- v.1: [Gemini 2.5 Flash]
   1. Provides 3 levels of difficulty -- Easy, Hard, Elite
   2. Scoring for the recently ended game -- Time and # Hits
   3. Simple sound effects when bumping into obstacles and reaching the goal
@@ -60,9 +60,9 @@ See if you can better your previous high score.
 Proposed additions for v.2:
 1. Change blockers from using whole hex tiles to walls using individual hex segments [DONE]
 2. Additional blocker walls with increasing difficulty [DONE] (investigate moving walls)
-3. Different gameboard sizes
+3. Different gameboard sizes [DONE]
 4. Better sound effects [DONE]
-5. Lighting effects
+5. Lighting effects [PARTIAL]
 6. Randomized start and end points (investigate moving end goal) [moving goal DONE]
 
 
