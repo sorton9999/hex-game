@@ -24,33 +24,33 @@ See if you can better your previous high score.
 
 --- ChangeLog ---
 
-06/06/2026 -- v.2.5
+06/06/2026 -- v.2.5 [Claude Haiku 4.5, GPT-5 Mini]
   1. Changed difficulty selection to increasing difficulty levels
   2. Added shaking board starting at level 5+
   3. Added flashing board at level 8+
   4. Added additional blocking tiles at level 4+
 
-02/22/2026 -- v.2.2.1
+02/22/2026 -- v.2.2.1 [Gemini 2.5 Flash]
   1. Added moving goal tile for ELITE difficulty
   2. Added flashing goal tile for all difficulties
   3. Added rogue obstacle tiles in ELITE mode that start to appear after a few seconds of gametime
 
-02/14/2026 -- v.2.2:
+02/14/2026 -- v.2.2: [Gemini 2.5 Flash]
   1. Upgraded sounds and added new sound files
   2. Added intro button to start game and activate sounds
   3. Fixed GOAL and START labels
 
-02/07/2026 -- v2.1:
+02/07/2026 -- v2.1: [Gemini 2.5 Flash]
   1. Introduced increasing the number of walls in response to increasing difficulty selections
   2. Fixed the game tile movement
   3. Increased the spawn rate of the obstacle tiles for the elite difficulty setting
 
-02/01/2026 -- v.2:
+02/01/2026 -- v.2: [Gemini 2.5 Flash]
   1. New walls replacing blocking hex tiles
   2. Better difficulty algorithm
   3. Additional labels for things
 
-01/31/2026 -- v.1:
+01/31/2026 -- v.1: [Gemini 2.5 Flash]
   1. Provides 3 levels of difficulty -- Easy, Hard, Elite
   2. Scoring for the recently ended game -- Time and # Hits
   3. Simple sound effects when bumping into obstacles and reaching the goal
