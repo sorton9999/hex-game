@@ -401,11 +401,12 @@
             // Calculate scale for both dimensions to fit perfectly without clipping
             const scaleX = dimensions.width / baseWidth;
             const scaleY = availableHeight / baseHeight;
+            const scaleFactor = 1.0; // Adjust this factor to make the game area larger or smaller relative to the screen
             let computedScale = Math.min(scaleX, scaleY);
             // Keep a scale minimum of 0.55 on smaller screens to maintain playability, 
             // even if it means some letterboxing
             if (dimensions.width < 1200) {
-                computedScale = Math.max(computedScale, 0.85); 
+                computedScale = Math.max(computedScale, scaleFactor); 
             }
 
             const currentScale = computedScale;
@@ -905,114 +906,197 @@
 
             // Render the UI, including the timer, collision count, high scores, difficulty selector, 
             // reset button, and the hex grid with tiles
-            return (
-                <div className="ui" style={{ gridRow: '1', padding: '10px', background: '#111', borderBottom: '1px solid #333', zIndex: 20 }}>
-                    <div className="ui-inner" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                        {status === "won" && <div className="victory" style={{ color: '#0f0', fontWeight: 'bold' }}>SYSTEM SECURED!</div>}
-                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', fontSize: 'clamp(11px, 1.2vw, 16px)' }}>
-                            <div className="stat"><span>LEVEL:</span> <span>{level}</span></div>
-                            <div className="stat"><span>TIME:</span> <span>{timer}s</span></div>
-                            <div className="stat"><span>HITS:</span> <span>{collisions}</span></div>
-                            <div className="high-scores" style={{ display: 'flex', gap: '15px' }}>
-                                <div className="stat"><span>FASTEST TIME:</span> <span>{bestTime}{bestTime !== '--' && 's'}</span></div>
-                                <div className="stat"><span>FEWEST HITS:</span> <span>{bestCollisions}</span></div>
-                            </div>
-                            <div className="stat"><span>DIFFICULTY:</span> <span>{diff.label}</span></div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                            <button onClick={() => { onReset() }}>RESET</button>
-                            <button onClick={clearHighScores} style={{ backgroundColor: '#330000', color: '#ff4444', border: '1px solid #ff4444' }}>CLEAR</button>
-                        </div>
-                    </div>
-                    {showContinuePrompt && (
-                        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 30, color: '#0f0', pointerEvents: 'auto' }}>
-                            <div style={{ background: '#000', border: '2px solid #0f0', padding: '24px', width: '320px', textAlign: 'center', boxShadow: '0 0 20px rgba(0,255,0,0.5)' }}>
-                                <div style={{ marginBottom: '14px', fontSize: '18px', fontWeight: 'bold' }}>LEVEL 3 COMPLETE</div>
-                                <div style={{ marginBottom: '12px' }}>Fastest time: {bestTime !== '--' ? `${bestTime}s` : '--'}</div>
-                                <div style={{ marginBottom: '12px' }}>Collisions: {bestCollisions !== '--' ? bestCollisions : '--'}</div>
-                                <div style={{ marginBottom: '18px' }}>Continue at Elite difficulty?</div>
-                               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                                    <button style={{ padding: '10px 16px', background: '#0f0', color: '#000', border: 'none', cursor: 'pointer' }} onClick={() => startNextLevel(4)}>YES</button>
-                                    <button style={{ padding: '10px 16px', background: '#330000', color: '#ff4444', border: '1px solid #ff4444', cursor: 'pointer' }} onClick={() => { setShowContinuePrompt(false); setStatus('stopped'); }}>NO</button>
-                                </div>
-                            </div>
+    return (
+        <div style={{ 
+            position: 'relative', 
+            width: '100vw', 
+            height: '100vh', 
+            overflow: 'hidden', 
+            backgroundColor: '#000' 
+        }}>
+            {/* HUD: Positioned absolutely at the top horizontal center of the viewport */}
+            <div className="ui" style={{ 
+                position: 'absolute',
+                top: '15px',
+                left: '50%',
+                transform: 'translateX(-50%)', // Pulls the block left by half its width to center it
+                width: 'max-content',          // Prevents the HUD from stretching to full-width
+                maxWidth: '90vw',             // Safety margin for narrow screens
+                padding: '16px 24px', 
+                background: 'rgba(0, 0, 0, 0.95)', // Increased opacity so game board elements don't distract behind it
+                border: '3px solid #0f0', 
+                boxShadow: '0 0 15px rgba(0, 255, 0, 0.3)', 
+                zIndex: 40,                     // Elevated layer to guarantee it floats over transition elements
+                borderRadius: '4px'
+            }}>
+                <div className="ui-inner" style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', // Centers the items within the HUD container row
+                    gap: '24px' 
+                }}>
+                    {status === "won" && (
+                        <div className="victory" style={{ 
+                            color: '#0f0', 
+                            fontWeight: 'bold', 
+                            fontSize: '22px', 
+                            letterSpacing: '2px',
+                            textShadow: '0 0 8px #0f0' 
+                        }}>
+                            SYSTEM SECURED!
                         </div>
                     )}
-                <div style={{ 
-                    gridRow: '2', 
-                    position: 'relative', 
-                    width: '100%', 
-                    height: '100%', 
-                    // View the entire container when testing in squeezed code side-panels
-                    overflow: dimensions.width < 1200 ? 'auto' : 'hidden', 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#000'
-                }}>                    
-                    {/* This container locks the internal resolution and scales responsively */}
+                    
                     <div style={{ 
-                        width: `${baseWidth}px`, 
-                        height: `${baseHeight}px`, 
-                        transform: `scale(${currentScale})`, 
-                        transformOrigin: 'center center',
-                        flexShrink: 0
-                    }}>         
-                        {renderBoard({
-                                boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
-                                boardGoal: goal,
-                                boardDiff: diff,
-                                showHazards: true,
-                                boardKey: 'current',
-                                style: (() => {
-                                    const side = pendingSide !== null ? pendingSide : 1;
-                                    const vec = TRANSITION_VECTORS[side];
-                                    const joltX = collisionJolt.x || 0;
-                                    const joltY = collisionJolt.y || 0;
-                                    return {
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        transform: `${isTransitioning ? `translate(${-vec.x}vw, ${-vec.y}vh)` : 'translate(0, 0)'} translate(${joltX}px, ${joltY}px)`,
-                                        transition: isTransitioning ? 'transform 0.8s ease' : 'none',
-                                        overflow: 'visible'
-                                    };
-                                })()
-                            })}
-                            {pendingBoardActive && renderBoard({
-                                boardSelected: START_POS,
-                                boardGoal: GOAL_POS,
-                                boardDiff: pendingDiff || getDifficultyForLevel(level + 1),
-                                showHazards: false,
-                                boardKey: 'pending',
-                                style: (() => {
-                                    const side = pendingSide !== null ? pendingSide : 1;
-                                    const vec = TRANSITION_VECTORS[side];
-                                    return {
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        transform: isTransitioning ? 'translate(0, 0)' : `translate(${vec.x}vw, ${vec.y}vh)`,
-                                        transition: 'transform 0.8s ease',
-                                        visibility: isTransitioning ? 'visible' : 'hidden',
-                                        overflow: 'visible'
-                                    };
-                                })()
-                            })}
+                        display: 'flex', 
+                        gap: '24px', 
+                        flexWrap: 'wrap', 
+                        fontSize: 'clamp(14px, 1.5vw, 18px)', 
+                        color: '#0f0', 
+                        fontFamily: 'monospace', 
+                        fontWeight: 'bold'
+                    }}>
+                        <div className="stat"><span style={{ color: '#888' }}>LEVEL:</span> <span>{level}</span></div>
+                        <div className="stat"><span style={{ color: '#888' }}>TIME:</span> <span>{timer}s</span></div>
+                        <div className="stat"><span style={{ color: '#888' }}>HITS:</span> <span>{collisions}</span></div>
+                        
+                        <div className="high-scores" style={{ display: 'flex', gap: '24px' }}>
+                            <div className="stat">
+                                <span style={{ color: '#888' }}>FASTEST TIME:</span> 
+                                <span>{bestTime}{bestTime !== '--' && 's'}</span>
+                            </div>
+                            <div className="stat">
+                                <span style={{ color: '#888' }}>FEWEST HITS:</span> 
+                                <span>{bestCollisions}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="stat"><span style={{ color: '#888' }}>DIFFICULTY:</span> <span style={{ color: '#ffaa00' }}>{diff.label}</span></div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <button 
+                            onClick={() => { onReset() }} 
+                            style={{ 
+                                padding: '10px 20px', 
+                                background: '#0f0', 
+                                color: '#000', 
+                                border: 'none', 
+                                fontWeight: 'bold', 
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}>
+                            RESET SIMULATION
+                        </button>
+                        <button 
+                            onClick={clearHighScores} 
+                            style={{ 
+                                padding: '10px 20px', 
+                                backgroundColor: '#330000', 
+                                color: '#ff4444', 
+                                border: '2px solid #ff4444', 
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}>
+                            CLEAR HIGH SCORES
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Level Complete Continue Prompt modal */}
+            {showContinuePrompt && (
+                <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 50, color: '#0f0', pointerEvents: 'auto' }}>
+                    <div style={{ background: '#000', border: '2px solid #0f0', padding: '24px', width: '320px', textAlign: 'center', boxShadow: '0 0 20px rgba(0,255,0,0.5)' }}>
+                        <div style={{ marginBottom: '14px', fontSize: '18px', fontWeight: 'bold' }}>LEVEL 3 COMPLETE</div>
+                        <div style={{ marginBottom: '12px' }}>Fastest time: {bestTime !== '--' ? `${bestTime}s` : '--'}</div>
+                        <div style={{ marginBottom: '12px' }}>Collisions: {bestCollisions !== '--' ? bestCollisions : '--'}</div>
+                        <div style={{ marginBottom: '18px' }}>Continue at Elite difficulty?</div>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                            <button style={{ padding: '10px 16px', background: '#0f0', color: '#000', border: 'none', cursor: 'pointer' }} onClick={() => startNextLevel(4)}>YES</button>
+                            <button style={{ padding: '10px 16px', background: '#330000', color: '#ff4444', border: '1px solid #ff4444', cursor: 'pointer' }} onClick={() => { setShowContinuePrompt(false); setStatus('stopped'); }}>NO</button>
                         </div>
                     </div>
-                    {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
-                    <label style={{ position: 'fixed', bottom: '5px', left: '10px', right: '10px', textAlign: 'center', color: '#555', fontSize: '10px', zIndex: 25, pointerEvents: 'none' }}>
-                        Hexel 2026 (v.2.5) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
-                    </label>                    
-                    <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} onStartSoundEnd={() => { startSpawnAnimation(); }} />
                 </div>
-            );
-        };
+            )}
+
+            {/* Scaling Board Frame */}
+            <div style={{ 
+                position: 'absolute',
+                inset: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10
+            }}>
+                <div style={{ 
+                    width: `${baseWidth}px`, 
+                    height: `${baseHeight}px`, 
+                    transform: `scale(${currentScale})`, 
+                    transformOrigin: 'center center',
+                    flexShrink: 0
+                }}>
+                    {renderBoard({
+                        boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
+                        boardGoal: goal,
+                        boardDiff: diff,
+                        showHazards: true,
+                        boardKey: 'current',
+                        style: (() => {
+                            const side = pendingSide !== null ? pendingSide : 1;
+                            const vec = TRANSITION_VECTORS[side];
+                            const joltX = collisionJolt.x || 0;
+                            const joltY = collisionJolt.y || 0;
+                            return {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                transform: `${isTransitioning ? `translate(${-vec.x}vw, ${-vec.y}vh)` : 'translate(0, 0)'} translate(${joltX}px, ${joltY}px)`,
+                                transition: isTransitioning ? 'transform 0.8s ease' : 'none',
+                                overflow: 'visible'
+                            };
+                        })()
+                    })}
+                    {pendingBoardActive && renderBoard({
+                        boardSelected: START_POS,
+                        boardGoal: GOAL_POS,
+                        boardDiff: pendingDiff || getDifficultyForLevel(level + 1),
+                        showHazards: false,
+                        boardKey: 'pending',
+                        style: (() => {
+                            const side = pendingSide !== null ? pendingSide : 1;
+                            const vec = TRANSITION_VECTORS[side];
+                            return {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                transform: isTransitioning ? 'translate(0, 0)' : `translate(${vec.x}vw, ${vec.y}vh)`,
+                                transition: 'transform 0.8s ease',
+                                visibility: isTransitioning ? 'visible' : 'hidden',
+                                overflow: 'visible'
+                            };
+                        })()
+                    })}
+                </div>
+            </div>
+
+            {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
+            
+            <label style={{ position: 'absolute', bottom: '10px', left: '20px', right: '20px', textAlign: 'left', color: '#555', fontSize: '12px', fontFamily:'monospace', zIndex: 25, pointerEvents: 'none' }}>
+                Hexel 2026 (v.2.5.1) - Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
+            </label>
+            
+            <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} onStartSoundEnd={() => { startSpawnAnimation(); }} />
+        </div>
+    );
+    };
 
         // Render the App component into the root div
         const root = ReactDOM.createRoot(document.getElementById('root'));
