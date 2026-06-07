@@ -1001,15 +1001,15 @@
             overflow: 'hidden'
         }}>
             {/* 
-              This box is locked to a massive 2560x1440 footprint.
+              This box is locked to a massive 3840x2160 footprint.
               By scaling from a calculated CSS variable fallback or explicit scale,
               we ensure it fits smaller screens without shrinking the internal grid elements.
             */}
             <div style={{ 
-                width: '2560px', 
-                height: '1440px', 
+                width: '3840px', 
+                height: '2160px', 
                 // Uses CSS Math to find the ideal scale based on screen width vs your original design 
-                transform: 'scale(clamp(0.45, 100vw / 2560, 1.2))', 
+                transform: 'scale(clamp(0.45, 100vw / 3840, 1.2))', 
                 transformOrigin: 'center center',
                 flexShrink: 0
             }}>
