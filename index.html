@@ -375,42 +375,6 @@
         // App Component: Main component that manages game state, user interactions, and renders the UI and hex grid
         const App = () => {
 
-            // Window size tracking hooks to allow for responsive scaling of the hex grid and UI elements
-            const [dimensions, setDimensions] = React.useState({
-                width: window.innerWidth,
-                height: window.innerHeight
-            });
-
-            React.useEffect(() => {
-                const handleResize = () => {
-                    setDimensions({
-                        width: window.innerWidth,
-                        height: window.innerHeight
-                    });
-                };
-                window.addEventListener('resize', handleResize);
-                return () => window.removeEventListener('resize', handleResize);
-            }, []);           
-
-            const baseWidth = 2560;
-            const baseHeight = 1440;
-            // Reserve vertical screen real estate for your HUD (e.g., 60px)
-            const hudHeight = 60; 
-            const availableHeight = dimensions.height - hudHeight;
-
-            // Calculate scale for both dimensions to fit perfectly without clipping
-            const scaleX = dimensions.width / baseWidth;
-            const scaleY = availableHeight / baseHeight;
-            const scaleFactor = 1.0; // Adjust this factor to make the game area larger or smaller relative to the screen
-            let computedScale = Math.min(scaleX, scaleY);
-            // Keep a scale minimum of 0.55 on smaller screens to maintain playability, 
-            // even if it means some letterboxing
-            if (dimensions.width < 1200) {
-                computedScale = Math.max(computedScale, scaleFactor); 
-            }
-
-            const currentScale = computedScale;
-
             // Define difficulty levels with their respective spawn rates and hazard durations
             const DIFFICULTY_LEVELS = {
             EASY: { label: "EASY", spawnRate: 1, duration: 1.5 },
@@ -1025,16 +989,28 @@
             </div>
         )}
 
-        {/* Game Board Container - Reconfigured to fit 16:9 layout parameters automatically */}
+        {/* Game Board Container */}
         <div style={{ 
             position: 'absolute',
-            width: '100%',
-            height: '100%',
-            aspectRatio: '16 / 9', // Locks the container geometry to match a 2560x1440 ratio
-            maxHeight: '100vh',
-            maxWidth: '100vw',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)', 
+            
+            // Force full width on standard resolutions, but prevent shrinking past 1024px in split screens
+            width: '100vw',
+            minWidth: '1024px', 
+            
+            // Lock structural height precisely to a 16:9 box model ratio (9 / 16 = 56.25%)
+            height: '56.25vw',                  
+            minHeight: '576px', // Floor height counterpart matching the 1024px width boundary
+            
+            // Safety barriers ensuring the layout canvas box never over-bleeds past your actual physical monitor edges
+            maxHeight: '100vh',                 
+            maxWidth: '177.78vh',               
+            
             overflow: 'hidden',
-            zIndex: 10
+            zIndex: 10,
+            backgroundColor: '#050505'
         }}>
             {renderBoard({
                 boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
@@ -1082,7 +1058,7 @@
                 })()
             })}
         </div>
-
+        
         {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
         
         {/* Guard-railed Left Footer Label */}
