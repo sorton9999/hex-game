@@ -479,6 +479,19 @@
             const dragStart = React.useRef({ x: 0, y: 0 });
             const currentPos = React.useRef({ bottom: 40, right: 40 });
 
+            // Tracks which direction key is currently held down ('ArrowUp', 'ArrowDown', etc.)
+            const [activeDir, setActiveDir] = React.useState(null);
+
+            const handleTouchStart = (dir) => {
+                setActiveDir(dir);
+                const event = new KeyboardEvent('keydown', { key: dir });
+                window.dispatchEvent(event);
+            };
+
+            const handleTouchEnd = () => {
+                setActiveDir(null);
+            };       
+
             const handleDragStart = (e) => {
                 const touch = e.touches[0];
                 dragStart.current = { x: touch.clientX, y: touch.clientY };
@@ -1127,8 +1140,17 @@
             // Hide controls on desktop screens but display them on mobile devices
             opacity: window.innerWidth < 1024 ? 1 : 0,
             pointerEvents: window.innerWidth < 1024 ? 'auto' : 'none',
-            touchAction: 'none' // Prevent default touch actions to allow for dragging
-        }}>
+            touchAction: 'none', // Prevent default touch actions to allow for dragging
+
+            // Eradicates mobile selection highlights and copy-paste interference
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'none'
+        }}
+        onContextMenu={(e) => e.preventDefault()} // Disables long-press context menus on Android/iOS
+        >
         {/* Drage Handle Area */}
             <div 
                 onTouchStart={handleDragStart}
@@ -1148,8 +1170,8 @@
                     fontSize: '11px',
                     fontWeight: 'bold',
                     letterSpacing: '1px',
-                    cursor: 'move',
-                    userSelect: 'none'
+                    cursor: 'move'//,
+                    //userSelect: 'none'
                 }}>
                 ::: DRAG TO REPOSITION :::
             </div>
@@ -1187,18 +1209,22 @@
 
                 {/* ================= UP ARC (45° to 135°) ================= */}
                 <div 
-                    onTouchStart={() => handleTouchDirection('ArrowUp')}
+                    onTouchStart={() => handleTouchStart('ArrowUp')}
+                    onTouchEnd={() => {handleTouchEnd()}}
                     style={{
                         position: 'absolute',
                         inset: '5px',
                         borderRadius: '50%',
-                        background: 'conic-gradient(from 46deg, #000 88deg, transparent 88deg)',
+                        // Dynamically changes background to solid neon green when active
+                        background: activeDir === 'ArrowUp' 
+                            ? 'conic-gradient(from 46deg, #0f0 88deg, transparent 88deg)' 
+                            : 'conic-gradient(from 46deg, #000 88deg, transparent 88deg)',
                         clipPath: 'polygon(50% 50%, 0 0, 100% 0)',
                         cursor: 'pointer',
                         display: 'flex',
                         justifyContent: 'center',
                         paddingTop: '25px',
-                        color: '#0f0',
+                        color: activeDir === 'ArrowUp' ? '#000' : '#0f0',
                         fontSize: '28px',
                         fontWeight: 'bold',
                         zIndex: 46
@@ -1208,19 +1234,23 @@
 
                 {/* ================= RIGHT ARC (135° to 225°) ================= */}
                 <div 
-                    onTouchStart={() => handleTouchDirection('ArrowRight')}
+                    onTouchStart={() => handleTouchStart('ArrowRight')}
+                    onTouchEnd={() => {handleTouchEnd()}}
                     style={{
                         position: 'absolute',
                         inset: '5px',
                         borderRadius: '50%',
-                        background: 'conic-gradient(from 136deg, #000 88deg, transparent 88deg)',
+                        // Dynamically changes background to solid neon green when active
+                        background: activeDir === 'ArrowRight' 
+                            ? 'conic-gradient(from 136deg, #0f0 88deg, transparent 88deg)' 
+                            : 'conic-gradient(from 136deg, #000 88deg, transparent 88deg)',
                         clipPath: 'polygon(50% 50%, 100% 0, 100% 100%)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'flex-end',
                         paddingRight: '25px',
-                        color: '#0f0',
+                        color: activeDir === 'ArrowRight' ? '#000' : '#0f0',
                         fontSize: '28px',
                         fontWeight: 'bold',
                         zIndex: 46
@@ -1230,19 +1260,23 @@
 
                 {/* ================= DOWN ARC (225° to 315°) ================= */}
                 <div 
-                    onTouchStart={() => handleTouchDirection('ArrowDown')}
+                    onTouchStart={() => handleTouchStart('ArrowDown')}
+                    onTouchEnd={() => {handleTouchEnd()}}
                     style={{
                         position: 'absolute',
                         inset: '5px',
                         borderRadius: '50%',
-                        background: 'conic-gradient(from 226deg, #000 88deg, transparent 88deg)',
+                        // Dynamically changes background to solid neon green when active
+                        background: activeDir === 'ArrowDown' 
+                            ? 'conic-gradient(from 226deg, #0f0 88deg, transparent 88deg)' 
+                            : 'conic-gradient(from 226deg, #000 88deg, transparent 88deg)',
                         clipPath: 'polygon(50% 50%, 100% 100%, 0 100%)',
                         cursor: 'pointer',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'flex-end',
                         paddingBottom: '25px',
-                        color: '#0f0',
+                        color: activeDir === 'ArrowDown' ? '#000' : '#0f0',
                         fontSize: '28px',
                         fontWeight: 'bold',
                         zIndex: 46
@@ -1252,18 +1286,22 @@
 
                 {/* ================= LEFT ARC (315° to 45°) ================= */}
                 <div 
-                    onTouchStart={() => handleTouchDirection('ArrowLeft')}
+                    onTouchStart={() => handleTouchStart('ArrowLeft')}
+                    onTouchEnd={() => {handleTouchEnd()}}
                     style={{
                         position: 'absolute',
                         inset: '5px',
                         borderRadius: '50%',
-                        background: 'conic-gradient(from 316deg, #000 88deg, transparent 88deg)',
+                        // Dynamically changes background to solid neon green when active
+                        background: activeDir === 'ArrowLeft' 
+                            ? 'conic-gradient(from 316deg, #0f0 88deg, transparent 88deg)' 
+                            : 'conic-gradient(from 316deg, #000 88deg, transparent 88deg)',
                         clipPath: 'polygon(50% 50%, 0 100%, 0 0)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         paddingLeft: '25px',
-                        color: '#0f0',
+                        color: activeDir === 'ArrowLeft' ? '#000' : '#0f0',
                         fontSize: '28px',
                         fontWeight: 'bold',
                         zIndex: 46
