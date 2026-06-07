@@ -7,9 +7,8 @@ implementation was accidental.  It started with a simple query and by using AI p
 
 So this is a simple hex game.  You use keyboard arrows to move a hex tile located at the bottom of a hex gameboard to a goal at the opposite end of the board.  While moving the tile, the gameboard has obstacles to avoid.  These obstacles consist of immovable hex walls and randomly flashing hex tiles.  Your fastest time and least number of collisions are scored.
 
-There is a difficulty level that can be set to make the game more challenging.
+As the game progresses, increasing levels provide increasing difficulty.
 
-See if you can better your previous high score.
 
 --- Screenshots ---
 
@@ -23,6 +22,9 @@ See if you can better your previous high score.
 
 
 --- ChangeLog ---
+
+06/07/2026 -- v.2.5.2 [Gemini 2.5 Flash]
+  1. Add player controls for mobile
 
 06/06/2026 -- v.2.5.1 [Gemini 2.5 Flash]
   1. Added resizeable game area to support different screen resolution
