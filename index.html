@@ -1119,8 +1119,8 @@
             position: 'absolute',
             bottom: `${dpadPos.bottom}px`,
             right: `${dpadPos.right}px`,
-            width: '220px',
-            height: '260px',
+            width: '260px',
+            height: '305px',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 45,
@@ -1137,66 +1137,139 @@
                 style={{ 
                     height: '40px', 
                     marginBottom: '8px', 
-                    background: isDragging ? 'rgba(0,255,0,0.2)' : 'rgba(0,255,0,0.05)',
-                    color: isDragging ? '#0f0' : '#020',
-                    border: '1px dashed #020',
+                    background: isDragging ? '#0f0' : '#111',
+                    color: isDragging ? '#000' : '#0f0',
+                    border: '2px solid #0f0',
                     borderBottom: 'none', 
-                    borderRadius: '4px', 
+                    borderRadius: '8px 8px 0 0', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 'bold',
                     letterSpacing: '1px',
-                    cursor: 'grab',
+                    cursor: 'move',
                     userSelect: 'none'
                 }}>
                 ::: DRAG TO REPOSITION :::
             </div>
-            {/* Zero gap Cross Layout Matrix */}
-            <div style={{ 
-                flex: 1,
+            {/* The Arc Steering Wheel Wrapper */}
+            <div style={{
+                position: 'relative',
+                width: '260px',
+                height: '260px',
                 background: 'rgba(0,0,0,0.95)',
                 border: '3px solid #0f0',
-                borderRadius: '0 0 100px 100px', // Rounds the base shell to comfortably rest in hand margins
+                borderTop: 'none',
+                borderRadius: '0 0 130px 130px', // Perfect semi-circle shell base
                 boxShadow: '0 0 25px rgba(0, 255, 0, 0.25)',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gridTemplateRows: 'repeat(3, 1fr)'
+                overflow: 'hidden'
             }}>
-                {/* Row 1 */}
-                <div  style={{ borderRight: '1px solid rgba(0,255,0,0.1)', borderBottom: '1px solid rgba(0,255,0,0.1)' }} />
-                <button 
-                    onTouchStart={() => handleTouchDirection('ArrowUp')}
-                    style={{ background: '#000', border: 'none', borderLeft: '2px solid #0f0', borderRight: '2px solid #0f0', borderBottom: '2px solid #0f0', color: '#0f0', fontWeight: 'bold', fontSize: '28px', activeBackground: '#0f0' }}>
-                    ▲
-                </button>
-                <div  style={{ borderLeft: '1px solid rgba(0,255,0,0.1)', borderBottom: '1px solid rgba(0,255,0,0.1)' }}/>
-
-                {/* Row 2 */}
-                <button 
-                    onTouchStart={() => handleTouchDirection('ArrowLeft')}
-                    style={{ background: '#000', border: 'none', borderTop: '2px solid #0f0', borderRight: '2px solid #0f0', borderBottom: '2px solid #0f0', color: '#0f0', fontWeight: 'bold', fontSize: '28px' }}>
-                    ◀
-                </button>
-                {/* Dead Center Axis — Thumb Anchor Rest Area */}
-                <div style={{ background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Core Center Anchor Circle - Keeps your thumb grounded */}
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60px',
+                    height: '60px',
+                    background: '#111',
+                    border: '2px solid #0f0',
+                    borderRadius: '50%',
+                    zIndex: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none'
+                }}>
                     <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0f0', boxShadow: '0 0 8px #0f0' }} />
                 </div>
-                <button 
-                    onTouchStart={() => handleTouchDirection('ArrowRight')}
-                    style={{ background: '#000', border: 'none', borderTop: '2px solid #0f0', borderLeft: '2px solid #0f0', borderBottom: '2px solid #0f0', color: '#0f0', fontWeight: 'bold', fontSize: '28px' }}>
-                    ▶
-                </button>
 
-                {/* Row 3 */}
-                <div style={{ borderRight: '1px solid rgba(0,255,0,0.1)', borderTop: '1px solid rgba(0,255,0,0.1)' }} />
-                <button 
+                {/* ================= UP ARC (45° to 135°) ================= */}
+                <div 
+                    onTouchStart={() => handleTouchDirection('ArrowUp')}
+                    style={{
+                        position: 'absolute',
+                        inset: '5px',
+                        borderRadius: '50%',
+                        background: 'conic-gradient(from 46deg, #000 88deg, transparent 88deg)',
+                        clipPath: 'polygon(50% 50%, 0 0, 100% 0)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        paddingTop: '25px',
+                        color: '#0f0',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        zIndex: 46
+                    }}>
+                    ▲
+                </div>
+
+                {/* ================= RIGHT ARC (135° to 225°) ================= */}
+                <div 
+                    onTouchStart={() => handleTouchDirection('ArrowRight')}
+                    style={{
+                        position: 'absolute',
+                        inset: '5px',
+                        borderRadius: '50%',
+                        background: 'conic-gradient(from 136deg, #000 88deg, transparent 88deg)',
+                        clipPath: 'polygon(50% 50%, 100% 0, 100% 100%)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        paddingRight: '25px',
+                        color: '#0f0',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        zIndex: 46
+                    }}>
+                    ▶
+                </div>
+
+                {/* ================= DOWN ARC (225° to 315°) ================= */}
+                <div 
                     onTouchStart={() => handleTouchDirection('ArrowDown')}
-                    style={{ background: '#000', border: 'none', borderLeft: '2px solid #0f0', borderRight: '2px solid #0f0', borderTop: '2px solid #0f0', color: '#0f0', fontWeight: 'bold', fontSize: '28px' }}>
+                    style={{
+                        position: 'absolute',
+                        inset: '5px',
+                        borderRadius: '50%',
+                        background: 'conic-gradient(from 226deg, #000 88deg, transparent 88deg)',
+                        clipPath: 'polygon(50% 50%, 100% 100%, 0 100%)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'flex-end',
+                        paddingBottom: '25px',
+                        color: '#0f0',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        zIndex: 46
+                    }}>
                     ▼
-                </button>
-                <div style={{ borderLeft: '1px solid rgba(0,255,0,0.1)', borderTop: '1px solid rgba(0,255,0,0.1)' }} />
+                </div>
+
+                {/* ================= LEFT ARC (315° to 45°) ================= */}
+                <div 
+                    onTouchStart={() => handleTouchDirection('ArrowLeft')}
+                    style={{
+                        position: 'absolute',
+                        inset: '5px',
+                        borderRadius: '50%',
+                        background: 'conic-gradient(from 316deg, #000 88deg, transparent 88deg)',
+                        clipPath: 'polygon(50% 50%, 0 100%, 0 0)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingLeft: '25px',
+                        color: '#0f0',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        zIndex: 46
+                    }}>
+                    ◀
+                </div>
             </div>
         </div>
         {/* SoundManager component to handle game sounds based on the current game state. */}
