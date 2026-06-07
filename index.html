@@ -10,6 +10,17 @@
     <!-- 2. Load Babel to transpile JSX in the browser -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
+
+        html, body, #root, #app {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100vh !important;
+            background-color: #000;
+            overflow: hidden;
+        }
+
         body { margin: 0; background: #050505; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; overflow: hidden; }
         .ui {
             position: absolute;
@@ -141,7 +152,7 @@
 
         const PERMANENT_ROGUES = new Set();
         const TEMP_PROTECTED = new Set(); // tiles protected from becoming rogues while goal occupies them
-        const rogueInterval = 0;
+        let rogueInterval = 0;
 
       
         // SoundManager Component: Handles loading and playing sounds based on game events
@@ -933,31 +944,37 @@
         <div className="ui" style={{ 
             position: 'absolute',
             top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)', 
-            width: 'max-content',          
-            maxWidth: '95vw',             
-            padding: '16px 24px', 
-            background: 'rgba(0, 0, 0, 0.92)', 
-            border: '3px solid #0f0', 
-            boxShadow: '0 0 15px rgba(0, 255, 0, 0.4)', 
+            left: '5vw',
+            right: '5vw',
+            width: '90vw',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '16px 24px',
+            pointerEvents: 'auto',
+            background: 'rgba(0, 0, 0, 0.95)', 
+            border: '4px solid #0f0', 
+            boxShadow: '0 0 20px rgba(0, 255, 0, 0.45)', 
             zIndex: 40,                     
             borderRadius: '4px'
         }}>
             <div className="ui-inner" style={{ 
                 display: 'flex', 
-                flexWrap: 'wrap', 
+                flexDirection: 'column',
+                //flexWrap: 'wrap', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                gap: '24px' 
+                gap: '16px',
+                width: '100%'
             }}>
                 {status === "won" && (
                     <div className="victory" style={{ 
                         color: '#0f0', 
                         fontWeight: 'bold', 
-                        fontSize: '22px', 
-                        letterSpacing: '2px',
-                        textShadow: '0 0 8px #0f0' 
+                        fontSize: 'clamp(24px, 4vw, 48px)', 
+                        letterSpacing: '3px',
+                        textShadow: '0 0 12px #0f0',
+                        marginBottom: '5px',
+                        textAlign: 'center' 
                     }}>
                         SYSTEM SECURED!
                     </div>
@@ -965,9 +982,10 @@
                 
                 <div style={{ 
                     display: 'flex', 
-                    gap: '24px', 
-                    flexWrap: 'wrap', 
-                    fontSize: 'clamp(14px, 1.2vw, 18px)', 
+                    gap: 'clamp(20px, 3vw, 40px)', 
+                    flexWrap: 'wrap',
+                    alignItems: 'center', 
+                    fontSize: 'clamp(18px, 3vw, 30px)', 
                     color: '#0f0', 
                     fontFamily: 'monospace', 
                     fontWeight: 'bold'
@@ -976,7 +994,7 @@
                     <div className="stat"><span style={{ color: '#888' }}>TIME:</span> <span>{timer}s</span></div>
                     <div className="stat"><span style={{ color: '#888' }}>HITS:</span> <span>{collisions}</span></div>
                     
-                    <div className="high-scores" style={{ display: 'flex', gap: '24px' }}>
+                    <div className="high-scores" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                         <div className="stat">
                             <span style={{ color: '#888' }}>FASTEST TIME:</span> 
                             <span>{bestTime}{bestTime !== '--' && 's'}</span>
@@ -990,30 +1008,30 @@
                     <div className="stat"><span style={{ color: '#888' }}>DIFFICULTY:</span> <span style={{ color: '#ffaa00' }}>{diff.label}</span></div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '5px' }}>
                     <button 
                         onClick={() => { onReset() }} 
                         style={{ 
-                            padding: '10px 20px', 
+                            padding: '12px 24px', 
                             background: '#0f0', 
                             color: '#000', 
                             border: 'none', 
                             fontWeight: 'bold', 
                             cursor: 'pointer',
-                            fontSize: '14px'
+                            fontSize: '16px'
                         }}>
                         RESET SIMULATION
                     </button>
                     <button 
                         onClick={clearHighScores} 
                         style={{ 
-                            padding: '10px 20px', 
+                            padding: '12px 24px', 
                             backgroundColor: '#330000', 
                             color: '#ff4444', 
                             border: '2px solid #ff4444', 
                             fontWeight: 'bold',
                             cursor: 'pointer',
-                            fontSize: '14px'
+                            fontSize: '16px'
                         }}>
                         CLEAR HIGH SCORES
                     </button>
@@ -1037,279 +1055,279 @@
             </div>
         )}
 
-        {/* NEW HIGH-DENSITY SCALING WRAPPER FRAME */}
-        <div style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10,
-            overflow: 'hidden'
-        }}>
-            {/* 
-              This box is locked to a massive 3840x2160 footprint.
-              By scaling from a calculated CSS variable fallback or explicit scale,
-              we ensure it fits smaller screens without shrinking the internal grid elements.
-            */}
-            <div style={{ 
-                width: '3840px', 
-                height: '2160px', 
-                // Uses CSS Math to find the ideal scale based on screen width vs your original design 
-                transform: 'scale(clamp(0.75, 100vw / 3840, 1.2))', 
-                transformOrigin: 'center center',
-                flexShrink: 0
-            }}>
-                {renderBoard({
-                    boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
-                    boardGoal: goal,
-                    boardDiff: diff,
-                    showHazards: true,
-                    boardKey: 'current',
-                    style: (() => {
-                        const side = pendingSide !== null ? pendingSide : 1;
-                        const vec = TRANSITION_VECTORS[side];
-                        const joltX = collisionJolt.x || 0;
-                        const joltY = collisionJolt.y || 0;
-                        return {
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            transform: `${isTransitioning ? `translate(${-vec.x}vw, ${-vec.y}vh)` : 'translate(0, 0)'} translate(${joltX}px, ${joltY}px)`,
-                            transition: isTransitioning ? 'transform 0.8s ease' : 'none',
-                            overflow: 'visible'
-                        };
-                    })()
-                })}
-                {pendingBoardActive && renderBoard({
-                    boardSelected: START_POS,
-                    boardGoal: GOAL_POS,
-                    boardDiff: pendingDiff || getDifficultyForLevel(level + 1),
-                    showHazards: false,
-                    boardKey: 'pending',
-                    style: (() => {
-                        const side = pendingSide !== null ? pendingSide : 1;
-                        const vec = TRANSITION_VECTORS[side];
-                        return {
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            transform: isTransitioning ? 'translate(0, 0)' : `translate(${vec.x}vw, ${vec.y}vh)`,
-                            transition: 'transform 0.8s ease',
-                            visibility: isTransitioning ? 'visible' : 'hidden',
-                            overflow: 'visible'
-                        };
-                    })()
-                })}
-            </div>
-        </div>
-
-        {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
-        
-        {/* Footnote Label */}
-        <label style={{ 
-            position: 'absolute', 
-            bottom: '10px',      
-            left: '20px',        
-            right: '20px',       
-            textAlign: 'left',   
-            color: '#555', 
-            fontSize: '12px', 
-            zIndex: 25, 
-            pointerEvents: 'none',
-            fontFamily: 'monospace'
-        }}>
-            Hexel 2026 (v.2.5) — Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
-        </label>
-
-        {/* Mobile: Draggable Thumb-Tilt Control Pad Cluster */}
-        <div style={{
-            position: 'absolute',
-            bottom: `${dpadPos.bottom}px`,
-            right: `${dpadPos.right}px`,
-            width: '260px',
-            height: '305px',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 45,
-            // Hide controls on desktop screens but display them on mobile devices
-            opacity: window.innerWidth < 1024 ? 1 : 0,
-            pointerEvents: window.innerWidth < 1024 ? 'auto' : 'none',
-            touchAction: 'none', // Prevent default touch actions to allow for dragging
-
-            // Eradicates mobile selection highlights and copy-paste interference
-            WebkitUserSelect: 'none',
-            MozUserSelect: 'none',
-            msUserSelect: 'none',
-            userSelect: 'none',
-            WebkitTouchCallout: 'none'
-        }}
-        onContextMenu={(e) => e.preventDefault()} // Disables long-press context menus on Android/iOS
-        >
-        {/* Drage Handle Area */}
-            <div 
-                onTouchStart={handleDragStart}
-                onTouchMove={handleDragMove}
-                onTouchEnd={handleDragEnd}
-                style={{ 
-                    height: '40px', 
-                    marginBottom: '8px', 
-                    background: isDragging ? '#0f0' : '#111',
-                    color: isDragging ? '#000' : '#0f0',
-                    border: '2px solid #0f0',
-                    borderBottom: 'none', 
-                    borderRadius: '8px 8px 0 0', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    letterSpacing: '1px',
-                    cursor: 'move'//,
-                    //userSelect: 'none'
-                }}>
-                ::: DRAG TO REPOSITION :::
-            </div>
-            {/* The Arc Steering Wheel Wrapper */}
+            {/* HIGH-DENSITY SCALING WRAPPER FRAME */}
             <div style={{
-                position: 'relative',
-                width: '260px',
-                height: '260px',
-                background: 'rgba(0,0,0,0.95)',
-                border: '3px solid #0f0',
-                borderTop: 'none',
-                borderRadius: '0 0 130px 130px', // Perfect semi-circle shell base
-                boxShadow: '0 0 25px rgba(0, 255, 0, 0.25)',
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10,
                 overflow: 'hidden'
             }}>
-                {/* Core Center Anchor Circle - Keeps your thumb grounded */}
-                <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '60px',
-                    height: '60px',
-                    background: '#111',
-                    border: '2px solid #0f0',
-                    borderRadius: '50%',
-                    zIndex: 48,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pointerEvents: 'none'
+                {/* 
+                This box is locked to a massive 3840x2160 footprint.
+                By scaling from a calculated CSS variable fallback or explicit scale,
+                we ensure it fits smaller screens without shrinking the internal grid elements.
+                */}
+                <div style={{ 
+                    width: '3840px', 
+                    height: '2160px', 
+                    // Uses CSS Math to find the ideal scale based on screen width vs your original design 
+                    transform: 'scale(clamp(0.75, 100vw / 3840, 1.2))', 
+                    transformOrigin: 'center center',
+                    flexShrink: 0
                 }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0f0', boxShadow: '0 0 8px #0f0' }} />
-                </div>
-
-                {/* ================= UP ARC (45° to 135°) ================= */}
-                <div 
-                    onTouchStart={() => handleTouchStart('ArrowUp')}
-                    onTouchEnd={() => {handleTouchEnd()}}
-                    style={{
-                        position: 'absolute',
-                        inset: '5px',
-                        borderRadius: '50%',
-                        // Dynamically changes background to solid neon green when active
-                        background: activeDir === 'ArrowUp' 
-                            ? 'conic-gradient(from 46deg, #0f0 88deg, transparent 88deg)' 
-                            : 'conic-gradient(from 46deg, #000 88deg, transparent 88deg)',
-                        clipPath: 'polygon(50% 50%, 0 0, 100% 0)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        paddingTop: '25px',
-                        color: activeDir === 'ArrowUp' ? '#000' : '#0f0',
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        zIndex: 46
-                    }}>
-                    ▲
-                </div>
-
-                {/* ================= RIGHT ARC (135° to 225°) ================= */}
-                <div 
-                    onTouchStart={() => handleTouchStart('ArrowRight')}
-                    onTouchEnd={() => {handleTouchEnd()}}
-                    style={{
-                        position: 'absolute',
-                        inset: '5px',
-                        borderRadius: '50%',
-                        // Dynamically changes background to solid neon green when active
-                        background: activeDir === 'ArrowRight' 
-                            ? 'conic-gradient(from 136deg, #0f0 88deg, transparent 88deg)' 
-                            : 'conic-gradient(from 136deg, #000 88deg, transparent 88deg)',
-                        clipPath: 'polygon(50% 50%, 100% 0, 100% 100%)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        paddingRight: '25px',
-                        color: activeDir === 'ArrowRight' ? '#000' : '#0f0',
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        zIndex: 46
-                    }}>
-                    ▶
-                </div>
-
-                {/* ================= DOWN ARC (225° to 315°) ================= */}
-                <div 
-                    onTouchStart={() => handleTouchStart('ArrowDown')}
-                    onTouchEnd={() => {handleTouchEnd()}}
-                    style={{
-                        position: 'absolute',
-                        inset: '5px',
-                        borderRadius: '50%',
-                        // Dynamically changes background to solid neon green when active
-                        background: activeDir === 'ArrowDown' 
-                            ? 'conic-gradient(from 226deg, #0f0 88deg, transparent 88deg)' 
-                            : 'conic-gradient(from 226deg, #000 88deg, transparent 88deg)',
-                        clipPath: 'polygon(50% 50%, 100% 100%, 0 100%)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'flex-end',
-                        paddingBottom: '25px',
-                        color: activeDir === 'ArrowDown' ? '#000' : '#0f0',
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        zIndex: 46
-                    }}>
-                    ▼
-                </div>
-
-                {/* ================= LEFT ARC (315° to 45°) ================= */}
-                <div 
-                    onTouchStart={() => handleTouchStart('ArrowLeft')}
-                    onTouchEnd={() => {handleTouchEnd()}}
-                    style={{
-                        position: 'absolute',
-                        inset: '5px',
-                        borderRadius: '50%',
-                        // Dynamically changes background to solid neon green when active
-                        background: activeDir === 'ArrowLeft' 
-                            ? 'conic-gradient(from 316deg, #0f0 88deg, transparent 88deg)' 
-                            : 'conic-gradient(from 316deg, #000 88deg, transparent 88deg)',
-                        clipPath: 'polygon(50% 50%, 0 100%, 0 0)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        paddingLeft: '25px',
-                        color: activeDir === 'ArrowLeft' ? '#000' : '#0f0',
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        zIndex: 46
-                    }}>
-                    ◀
+                    {renderBoard({
+                        boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
+                        boardGoal: goal,
+                        boardDiff: diff,
+                        showHazards: true,
+                        boardKey: 'current',
+                        style: (() => {
+                            const side = pendingSide !== null ? pendingSide : 1;
+                            const vec = TRANSITION_VECTORS[side];
+                            const joltX = collisionJolt.x || 0;
+                            const joltY = collisionJolt.y || 0;
+                            return {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                transform: `${isTransitioning ? `translate(${-vec.x}vw, ${-vec.y}vh)` : 'translate(0, 0)'} translate(${joltX}px, ${joltY}px)`,
+                                transition: isTransitioning ? 'transform 0.8s ease' : 'none',
+                                overflow: 'visible'
+                            };
+                        })()
+                    })}
+                    {pendingBoardActive && renderBoard({
+                        boardSelected: START_POS,
+                        boardGoal: GOAL_POS,
+                        boardDiff: pendingDiff || getDifficultyForLevel(level + 1),
+                        showHazards: false,
+                        boardKey: 'pending',
+                        style: (() => {
+                            const side = pendingSide !== null ? pendingSide : 1;
+                            const vec = TRANSITION_VECTORS[side];
+                            return {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                transform: isTransitioning ? 'translate(0, 0)' : `translate(${vec.x}vw, ${vec.y}vh)`,
+                                transition: 'transform 0.8s ease',
+                                visibility: isTransitioning ? 'visible' : 'hidden',
+                                overflow: 'visible'
+                            };
+                        })()
+                    })}
                 </div>
             </div>
-        </div>
+
+            {redFlash && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,0,0,0.5)', zIndex: 25, pointerEvents: 'none' }} />}
+            
+            {/* Footnote Label */}
+            <label style={{ 
+                position: 'absolute', 
+                bottom: '10px',      
+                left: '20px',        
+                right: '20px',       
+                textAlign: 'left',   
+                color: '#555', 
+                fontSize: '16px', 
+                zIndex: 25, 
+                pointerEvents: 'none',
+                fontFamily: 'monospace'
+            }}>
+                Hexel 2026 (v.2.5) — Navigate to the GOAL using the arrow keys while avoiding hazards and walls!
+            </label>
+
+            {/* Mobile: Draggable Thumb-Tilt Control Pad Cluster */}
+            <div style={{
+                position: 'absolute',
+                bottom: `${dpadPos.bottom}px`,
+                right: `${dpadPos.right}px`,
+                width: '260px',
+                height: '305px',
+                display: 'flex',
+                flexDirection: 'column',
+                zIndex: 45,
+                // Hide controls on desktop screens but display them on mobile devices
+                opacity: window.innerWidth < 1024 ? 1 : 0,
+                pointerEvents: window.innerWidth < 1024 ? 'auto' : 'none',
+                touchAction: 'none', // Prevent default touch actions to allow for dragging
+
+                // Eradicates mobile selection highlights and copy-paste interference
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                userSelect: 'none',
+                WebkitTouchCallout: 'none'
+            }}
+            onContextMenu={(e) => e.preventDefault()} // Disables long-press context menus on Android/iOS
+            >
+            {/* Drage Handle Area */}
+                <div 
+                    onTouchStart={handleDragStart}
+                    onTouchMove={handleDragMove}
+                    onTouchEnd={handleDragEnd}
+                    style={{ 
+                        height: '40px', 
+                        marginBottom: '8px', 
+                        background: isDragging ? '#0f0' : '#111',
+                        color: isDragging ? '#000' : '#0f0',
+                        border: '2px solid #0f0',
+                        borderBottom: 'none', 
+                        borderRadius: '8px 8px 0 0', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        letterSpacing: '1px',
+                        cursor: 'move'//,
+                        //userSelect: 'none'
+                    }}>
+                    ::: DRAG TO REPOSITION :::
+                </div>
+                {/* The Arc Steering Wheel Wrapper */}
+                <div style={{
+                    position: 'relative',
+                    width: '260px',
+                    height: '260px',
+                    background: 'rgba(0,0,0,0.95)',
+                    border: '3px solid #0f0',
+                    borderTop: 'none',
+                    borderRadius: '0 0 130px 130px', // Perfect semi-circle shell base
+                    boxShadow: '0 0 25px rgba(0, 255, 0, 0.25)',
+                    overflow: 'hidden'
+                }}>
+                    {/* Core Center Anchor Circle - Keeps your thumb grounded */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '60px',
+                        height: '60px',
+                        background: '#111',
+                        border: '2px solid #0f0',
+                        borderRadius: '50%',
+                        zIndex: 48,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        pointerEvents: 'none'
+                    }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0f0', boxShadow: '0 0 8px #0f0' }} />
+                    </div>
+
+                    {/* ================= UP ARC (45° to 135°) ================= */}
+                    <div 
+                        onTouchStart={() => handleTouchStart('ArrowUp')}
+                        onTouchEnd={() => {handleTouchEnd()}}
+                        style={{
+                            position: 'absolute',
+                            inset: '5px',
+                            borderRadius: '50%',
+                            // Dynamically changes background to solid neon green when active
+                            background: activeDir === 'ArrowUp' 
+                                ? 'conic-gradient(from 46deg, #0f0 88deg, transparent 88deg)' 
+                                : 'conic-gradient(from 46deg, #000 88deg, transparent 88deg)',
+                            clipPath: 'polygon(50% 50%, 0 0, 100% 0)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            paddingTop: '25px',
+                            color: activeDir === 'ArrowUp' ? '#000' : '#0f0',
+                            fontSize: '28px',
+                            fontWeight: 'bold',
+                            zIndex: 46
+                        }}>
+                        ▲
+                    </div>
+
+                    {/* ================= RIGHT ARC (135° to 225°) ================= */}
+                    <div 
+                        onTouchStart={() => handleTouchStart('ArrowRight')}
+                        onTouchEnd={() => {handleTouchEnd()}}
+                        style={{
+                            position: 'absolute',
+                            inset: '5px',
+                            borderRadius: '50%',
+                            // Dynamically changes background to solid neon green when active
+                            background: activeDir === 'ArrowRight' 
+                                ? 'conic-gradient(from 136deg, #0f0 88deg, transparent 88deg)' 
+                                : 'conic-gradient(from 136deg, #000 88deg, transparent 88deg)',
+                            clipPath: 'polygon(50% 50%, 100% 0, 100% 100%)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            paddingRight: '25px',
+                            color: activeDir === 'ArrowRight' ? '#000' : '#0f0',
+                            fontSize: '28px',
+                            fontWeight: 'bold',
+                            zIndex: 46
+                        }}>
+                        ▶
+                    </div>
+
+                    {/* ================= DOWN ARC (225° to 315°) ================= */}
+                    <div 
+                        onTouchStart={() => handleTouchStart('ArrowDown')}
+                        onTouchEnd={() => {handleTouchEnd()}}
+                        style={{
+                            position: 'absolute',
+                            inset: '5px',
+                            borderRadius: '50%',
+                            // Dynamically changes background to solid neon green when active
+                            background: activeDir === 'ArrowDown' 
+                                ? 'conic-gradient(from 226deg, #0f0 88deg, transparent 88deg)' 
+                                : 'conic-gradient(from 226deg, #000 88deg, transparent 88deg)',
+                            clipPath: 'polygon(50% 50%, 100% 100%, 0 100%)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'flex-end',
+                            paddingBottom: '25px',
+                            color: activeDir === 'ArrowDown' ? '#000' : '#0f0',
+                            fontSize: '28px',
+                            fontWeight: 'bold',
+                            zIndex: 46
+                        }}>
+                        ▼
+                    </div>
+
+                    {/* ================= LEFT ARC (315° to 45°) ================= */}
+                    <div 
+                        onTouchStart={() => handleTouchStart('ArrowLeft')}
+                        onTouchEnd={() => {handleTouchEnd()}}
+                        style={{
+                            position: 'absolute',
+                            inset: '5px',
+                            borderRadius: '50%',
+                            // Dynamically changes background to solid neon green when active
+                            background: activeDir === 'ArrowLeft' 
+                                ? 'conic-gradient(from 316deg, #0f0 88deg, transparent 88deg)' 
+                                : 'conic-gradient(from 316deg, #000 88deg, transparent 88deg)',
+                            clipPath: 'polygon(50% 50%, 0 100%, 0 0)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            paddingLeft: '25px',
+                            color: activeDir === 'ArrowLeft' ? '#000' : '#0f0',
+                            fontSize: '28px',
+                            fontWeight: 'bold',
+                            zIndex: 46
+                        }}>
+                        ◀
+                    </div>
+                </div>
+            </div>
         {/* SoundManager component to handle game sounds based on the current game state. */}
         <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} onStartSoundEnd={() => { startSpawnAnimation(); }} />
     </div>
