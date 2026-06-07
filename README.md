@@ -24,6 +24,10 @@ See if you can better your previous high score.
 
 --- ChangeLog ---
 
+06/06/2026 -- v.2.5.1 [Gemini 2.5 Flash]
+  1. Added resizeable game area to support different screen resolution
+  2. Reduced HUD size to give more area for the board
+
 06/06/2026 -- v.2.5 [Claude Haiku 4.5, GPT-5 Mini]
   1. Changed difficulty selection to increasing difficulty levels
   2. Added shaking board starting at level 5+
