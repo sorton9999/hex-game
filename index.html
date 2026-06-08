@@ -100,7 +100,7 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-        const HEX_SIZE = 35;
+        const HEX_SIZE = 38;
         const BASE_RADIUS = 4;
 
         // Helper to generate a unique key for a wall between two hexes
@@ -144,8 +144,10 @@
         victory: './sounds/mixkit-winning-notification-2018.wav',
         blip: './sounds/mixkit-quick-lock-sound-2854.wav',
         start: './sounds/mixkit-arcade-rising-231.wav',
-        reset: './sounds/mixkit-extra-bonus-in-a-video-game-2045.wav'
-        };
+        reset: './sounds/mixkit-extra-bonus-in-a-video-game-2045.wav',
+        bkgrnd1: './sounds/the_price_of_freedom-loop1.ogg',
+        bkgrnd2: './sounds/awake10_megaWall.mp3'
+       };
 
         // Directions for neighboring tiles in axial coordinates (q, r)
         const NEIGHBOR_TILES = [[1,0], [0,1], [-1,1], [-1,0], [0,-1], [1,-1]];
@@ -156,7 +158,7 @@
 
       
         // SoundManager Component: Handles loading and playing sounds based on game events
-        const SoundManager = ({isCollision, isVictory, isBlip, isReset, isStartAppear, onStartSoundEnd}) => {
+        const SoundManager = ({isCollision, isVictory, isBlip, isReset, isStartAppear, onStartSoundEnd, isSfxMuted}) => {
             const audioContext = useRef(null);
             const audioBuffer = useRef(null);
             const sourceNode = useRef(null);
@@ -212,6 +214,7 @@
                 loadSound(SOUND_FILES.collision);
                 loadSound(SOUND_FILES.victory);
                 loadSound(SOUND_FILES.reset);
+                //loadSound(SOUND_FILES.bkgrnd1);
             }, []);
 
             // Play specific sounds based on game events
@@ -237,6 +240,14 @@
             useEffect(() => {
                 if (isStartAppear) playSound(SOUND_FILES.reset);
             }, [isStartAppear]);
+            // Mute or unmute sound effects based on isSfxMuted state
+            useEffect(() => {
+                if (isSfxMuted) {
+                    gainNode.current.gain.value = 0;
+                } else {
+                    gainNode.current.gain.value = 0.8;
+                }
+            }, [isSfxMuted]);
 
             // Unlock audio on first user interaction
             // Many browsers require a user interaction to unlock audio playback, 
@@ -456,6 +467,10 @@
             const [isReset, setIsReset] = useState(false);
             const [isBlip, setIsBlip] = useState(false);
             const [status, setStatus] = useState("idle");
+            // Checkbox states for toggling sound
+            const [isChill, setIsChill] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isSfxMuted, setIsSfxMuted] = useState(false);
             // track player moves since level start; required to delay goal movement on level 3+
             const [playerMoves, setPlayerMoves] = useState(0);
             const [isTransitioning, setIsTransitioning] = useState(false);
@@ -479,7 +494,9 @@
             const levelRef = useRef(1);
             const playerMovesRef = useRef(0);
             const perimeterTilesRef = useRef([]);
-            
+            // Background music state
+            const bgMusicRef = useRef(null);
+
             // High Score State (Fastest Time / Least Collisions)
             const [bestTime, setBestTime] = useState(() => localStorage.getItem('hex_best_time') || '--');
             const [bestCollisions, setBestCollisions] = useState(() => localStorage.getItem('hex_best_hits') || '--');
@@ -524,7 +541,12 @@
             const handleDragEnd = () => {
                 setIsDragging(false);
                 currentPos.current = { ...dpadPos };
-            };           
+            };
+
+            // Toggle sound effects mute state
+            const toggleSfxMute = () => {
+                setIsSfxMuted(!isSfxMuted);
+            };
 
             // Function to clear high scores from localStorage and reset the displayed values
             const clearHighScores = () => {
@@ -536,7 +558,41 @@
                 setTimeout(() => setIsBlip(false), 300);
              };
 
+            // Helper to switch audio files seamlessly on an existing player node
+            const switchAudioTrack = (newSrc) => {
+                if (!bgMusicRef.current) return;
+                
+                const wasPlaying = !bgMusicRef.current.paused;
+                bgMusicRef.current.pause();
+                bgMusicRef.current.src = newSrc; // Swap the file source path instantly
+                bgMusicRef.current.load();
+                bgMusicRef.current.loop = true;
+                bgMusicRef.current.volume = isMuted ? 0 : 0.15;
+                
+                if (wasPlaying && !isMuted) {
+                    bgMusicRef.current.play().catch(e => console.log("Playback error:", e));
+                }
+            };
+
             const onReset = () => {
+                // Reset music to start
+                if (bgMusicRef.current) {
+                    bgMusicRef.current.pause();
+                    bgMusicRef.current.currentTime = 0;
+                }
+                const targetSrc = isChill ? SOUND_FILES.bkgrnd1 : SOUND_FILES.bkgrnd2;
+                if (!bgMusicRef.current.src.endsWith(targetSrc)) {
+                    bgMusicRef.current.src = targetSrc;
+                }
+                bgMusicRef.current.loop = true;
+                bgMusicRef.current.currentTime = 0;
+                bgMusicRef.current.volume = isMuted ? 0 : 0.15;
+                if (!isMuted) {
+                    bgMusicRef.current.play().catch(err => {
+                        console.log("Browser autoplay policy prevented audio execution on reset:", err);
+                    });
+                }
+
                 const resetRadius = BASE_RADIUS;
                 setSelected({ q: 0, r: resetRadius });
                 selectedRef.current = { q: 0, r: resetRadius };
@@ -621,10 +677,21 @@
                 return tiles;
             };
 
+            // On component unmount, stop any playing background music.
+            useEffect(() => {
+                return () => {
+                    // Cleanup background music on unmount
+                    if (bgMusicRef.current) {
+                        bgMusicRef.current.pause();
+                        bgMusicRef.current = null;
+                    }
+                };
+            }, []);
+
             // Memoize the tiles so the reference stays the same across renders
             const perimeterTiles = useMemo(() => getPerimeterTiles(), [currentRadius]); 
 
-// Keep a ref to the latest selected tile so the goal interval does not restart on every move
+            // Keep a ref to the latest selected tile so the goal interval does not restart on every move
              useEffect(() => {
                  selectedRef.current = selected;
              }, [selected]);
@@ -794,6 +861,38 @@
                     spawnRaf.current = requestAnimationFrame(step);
                 };
                 spawnRaf.current = requestAnimationFrame(step);
+
+                // Set up background music to play after a short delay, and loop indefinitely
+                if (!bgMusicRef.current) {
+                    const bgAudio = new Audio(SOUND_FILES.bkgrnd2);
+                    const initialSrc = isChill ? SOUND_FILES.bkgrnd1 : SOUND_FILES.bkgrnd2;
+                    bgAudio.src = initialSrc;
+                    bgAudio.loop = true;
+                    bgAudio.volume = isMuted ? 0 : 0.15;
+                    bgMusicRef.current = bgAudio;
+                }
+                setTimeout(() => {
+                    if (bgMusicRef.current && !isMuted) {
+                        bgMusicRef.current.play().catch(err => console.error("Error playing background music", err));
+                    }
+                }, 1500);
+            };
+
+            // Handle the Chill mode toggle on the fly
+            const toggleChill = () => {
+                const nextChillState = !isChill;
+                setIsChill(nextChillState);
+                switchAudioTrack(nextChillState ? SOUND_FILES.bkgrnd1 : SOUND_FILES.bkgrnd2);
+            };
+
+            const toggleMute = () => {
+                const nextMuteState = !isMuted;
+                setIsMuted(nextMuteState);
+    
+                if (bgMusicRef.current) {
+                    // Smoothly drop volume to 0 or restore to your 15% soft setting
+                    bgMusicRef.current.volume = nextMuteState ? 0 : 0.15;
+                }
             };
 
             // Schedule multiple shakes and an optional red flash on collision
@@ -1008,33 +1107,152 @@
                     <div className="stat"><span style={{ color: '#888' }}>DIFFICULTY:</span> <span style={{ color: '#ffaa00' }}>{diff.label}</span></div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '5px' }}>
-                    <button 
-                        onClick={() => { onReset() }} 
-                        style={{ 
-                            padding: '12px 24px', 
-                            background: '#0f0', 
-                            color: '#000', 
-                            border: 'none', 
+
+                <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap',
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', // Pushes the checkbox stack left and buttons right
+                    gap: '20px',
+                    width: '100%',
+                    marginTop: '10px',
+                    borderTop: '1px dashed rgba(0, 255, 0, 0.2)', // Subtle dividing line above controls
+                    paddingTop: '15px'
+                }}>
+
+                    {/* LEFT COLUMN: FUTURE-PROOF CHECBOX VERTICAL STACK */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column', // Stacks checkboxes neatly on top of each other
+                        alignItems: 'flex-start', // Keeps them all left-aligned
+                        gap: '8px', // Space between each checkbox row
+                        minWidth: '180px' // Prevents layout squeezing when empty rows are added
+                    }}>
+
+                
+
+                        {/* CHILL CHECKBOX */}
+                        <label style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '10px', 
+                            color: isChill ? '#ff00ff' : '#0f0', 
+                            fontFamily: 'monospace', 
+                            fontSize: '15px', 
                             fontWeight: 'bold', 
                             cursor: 'pointer',
-                            fontSize: '16px'
-                        }}>
-                        RESET SIMULATION
-                    </button>
-                    <button 
-                        onClick={clearHighScores} 
-                        style={{ 
-                            padding: '12px 24px', 
-                            backgroundColor: '#330000', 
-                            color: '#ff4444', 
-                            border: '2px solid #ff4444', 
+                            userSelect: 'none',
+                            transition: 'color 0.15s ease'
+                       }}>
+                            <input 
+                                type="checkbox" 
+                                checked={isChill}
+                                onChange={toggleChill}
+                                style={{ 
+                                    accentColor: '#0f0', 
+                                    width: '18px', 
+                                    height: '18px',
+                                    cursor: 'pointer'
+                                }} />
+                            <span>CHILL</span>
+                        </label> 
+                        
+                        {/* MUTE MUSIC */}
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            color: isMuted ? '#444' : '#0f0', 
+                            fontFamily: 'monospace',
+                            fontSize: '15px',
                             fontWeight: 'bold',
                             cursor: 'pointer',
-                            fontSize: '16px'
+                            userSelect: 'none',
+                            transition: 'color 0.15s ease'
                         }}>
-                        CLEAR HIGH SCORES
-                    </button>
+                            <input 
+                                type="checkbox"
+                                checked={isMuted}
+                                onChange={toggleMute}
+                                style={{
+                                    accentColor: '#0f0', 
+                                    width: '18px',
+                                    height: '18px',
+                                    cursor: 'pointer'
+                                }}/>
+                            <span>MUTE MUSIC</span>
+                        </label>
+
+                        {/* MUTE SFX */}
+                        {
+                        <label style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '10px', 
+                            color: isSfxMuted ? '#444' : '#0f0', 
+                            fontFamily: 'monospace', 
+                            fontSize: '15px', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            transition: 'color 0.15s ease'
+                        }}>
+                            <input type="checkbox" 
+                                checked={isSfxMuted}
+                                onChange={toggleSfxMute}
+                                style={{ 
+                                    accentColor: '#0f0', 
+                                    width: '18px', 
+                                    height: '18px',
+                                    cursor: 'pointer'
+                                }} 
+                                />
+                            <span>MUTE SFX</span>
+                        </label> 
+                        }
+
+                    </div>
+
+                    {/* RIGHT COLUMN: ACTION BUTTON CLUSTER */}
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: '12px', 
+                        flexWrap: 'wrap',
+                        justifyContent: 'flex-end' // Locks action buttons tightly to the right margin
+                    }}>
+
+
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '5px' }}>
+                            <button 
+                                onClick={() => { onReset() }} 
+                                style={{ 
+                                    padding: '12px 24px', 
+                                    background: '#0f0', 
+                                    color: '#000', 
+                                    border: 'none', 
+                                    fontWeight: 'bold', 
+                                    cursor: 'pointer',
+                                    fontSize: '16px'
+                                }}>
+                                RESET SIMULATION
+                            </button>
+                            <button 
+                                onClick={clearHighScores} 
+                                style={{ 
+                                    padding: '12px 24px', 
+                                    backgroundColor: '#330000', 
+                                    color: '#ff4444', 
+                                    border: '2px solid #ff4444', 
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    fontSize: '16px'
+                                }}>
+                                CLEAR HIGH SCORES
+                            </button>
+                        </div>
+
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -1329,7 +1547,11 @@
                 </div>
             </div>
         {/* SoundManager component to handle game sounds based on the current game state. */}
-        <SoundManager isCollision={isCollision} isVictory={isVictory} isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} onStartSoundEnd={() => { startSpawnAnimation(); }} />
+        <SoundManager isCollision={isCollision} isVictory={isVictory} 
+        isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} 
+        onStartSoundEnd={() => { startSpawnAnimation(); }} 
+        isSfxMuted={isSfxMuted}
+        />
     </div>
     );
     };
