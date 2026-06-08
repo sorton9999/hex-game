@@ -19,9 +19,16 @@ As the game progresses, increasing levels provide increasing difficulty.
 (Hexel 2026 v.2.X)
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
 
+(Hexel 2026 v.2.5.X)
+![Hexel 2026 v.2.5.X](/../screenshots/Hexel.v.2.5.3.png?raw=true "Hexel 2026 v.2.5.X")
 
 
 --- ChangeLog ---
+
+06/07/2026 -- v.2.5.3 [Gemini 2.5 Flash]
+  1. Added background music. Two types: Uptempo and Chill
+  2. Added checkboxes to switch on/off the various sounds
+  3. Added a 'Chill' checkbox to switch to some chill background music
 
 06/07/2026 -- v.2.5.2 [Gemini 2.5 Flash]
   1. Add player controls for mobile
