@@ -19,6 +19,8 @@ As the game progresses, increasing levels provide increasing difficulty.
 (Hexel 2026 v.2.X)
 ![Hexel 2026 v.1](/../screenshots/Hexel.v.2-start.png?raw=true "Hexel 2026 v.2")
 
+(Hexel 2026 v.2.5.X)
+![Hexel 2026 v.2.5.X](/../screenshots/Hexel.v.2.5.3.png?raw=true "Hexel 2026 v.2.5.X")
 
 
 --- ChangeLog ---
