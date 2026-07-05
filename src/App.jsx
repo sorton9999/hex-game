@@ -122,6 +122,10 @@ export default function App() {
                 const heightBased = heightBudget / ((radius * 2 + 1) * 1.8);
                 return Math.max(18, Math.min(38, Math.min(widthBased, heightBased)));
             }, [currentRadius, viewportSize.width, viewportSize.height]);
+            const uiScale = useMemo(() => {
+                const maxScale = Math.min(viewportSize.width / 390, viewportSize.height / 800, 1.15);
+                return Math.max(0.75, maxScale);
+            }, [viewportSize.width, viewportSize.height]);
             const START_POS = { q: 0, r: currentRadius };
             const GOAL_POS = { q: 0, r: -currentRadius };
             const getGoalTransitionSide = ({ q, r }) => {
@@ -714,16 +718,16 @@ export default function App() {
             {/* The Main Center-Aligned HUD Panel */}
             <div className="ui" style={{  
 				position: 'absolute',
-				top: '20px',
-				left: '5vw',
-				right: '5vw',
-				width: '90vw',
+				top: viewportSize.width < 768 ? '8px' : '20px',
+				left: viewportSize.width < 768 ? '8px' : '5vw',
+				right: viewportSize.width < 768 ? '8px' : '5vw',
+				width: viewportSize.width < 768 ? 'calc(100% - 16px)' : '90vw',
 				maxWidth: '1200px',
 				margin: '0 auto',
-				padding: '16px 24px',
+				padding: `${Math.max(10, Math.round(16 * uiScale))}px ${Math.max(12, Math.round(22 * uiScale))}px`,
 				pointerEvents: 'auto',
 				background: 'rgba(0, 0, 0, 0.95)', 
-				border: '4px solid #0f0', 
+				border: `${Math.max(2, Math.round(4 * uiScale))}px solid #0f0`, 
 				boxShadow: '0 0 20px rgba(0, 255, 0, 0.45)', 
 				zIndex: 40,                     
 				borderRadius: '4px'
@@ -734,7 +738,7 @@ export default function App() {
 					//flexWrap: 'wrap', 
 					alignItems: 'center', 
 					justifyContent: 'center', 
-					gap: '16px',
+					gap: `${Math.max(10, Math.round(16 * uiScale))}px`,
 					width: '100%'
 				}}>
 					{status === "won" && (
@@ -753,10 +757,10 @@ export default function App() {
 					
 					<div style={{ 
 						display: 'flex', 
-						gap: 'clamp(20px, 3vw, 40px)', 
+						gap: `${Math.max(10, Math.round(20 * uiScale))}px`, 
 						flexWrap: 'wrap',
 						alignItems: 'center', 
-						fontSize: 'clamp(18px, 3vw, 30px)', 
+						fontSize: `${Math.max(14, Math.round(18 * uiScale))}px`, 
 						color: '#0f0', 
 						fontFamily: 'monospace', 
 						fontWeight: 'bold'
@@ -765,7 +769,7 @@ export default function App() {
 						<div className="stat"><span style={{ color: '#888' }}>TIME:</span> <span>{timer}s</span></div>
 						<div className="stat"><span style={{ color: '#888' }}>HITS:</span> <span>{collisions}</span></div>
 						
-						<div className="high-scores" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+						<div className="high-scores" style={{ display: 'flex', gap: `${Math.max(12, Math.round(24 * uiScale))}px`, flexWrap: 'wrap' }}>
 							<div className="stat">
 								<span style={{ color: '#888' }}>FASTEST TIME:</span> 
 								<span>{bestTime}{bestTime !== '--' && 's'}</span>
@@ -785,11 +789,11 @@ export default function App() {
 						flexWrap: 'wrap',
 						alignItems: 'center', 
 						justifyContent: 'space-between', // Pushes the checkbox stack left and buttons right
-						gap: '20px',
+						gap: `${Math.max(12, Math.round(20 * uiScale))}px`,
 						width: '100%',
-						marginTop: '10px',
+						marginTop: `${Math.max(8, Math.round(10 * uiScale))}px`,
 						borderTop: '1px dashed rgba(0, 255, 0, 0.2)', // Subtle dividing line above controls
-						paddingTop: '15px'
+						paddingTop: `${Math.max(10, Math.round(14 * uiScale))}px`
 					}}>
 
 						{/* LEFT COLUMN: FUTURE-PROOF CHECBOX VERTICAL STACK */}
@@ -797,8 +801,8 @@ export default function App() {
 							display: 'flex',
 							flexDirection: 'column', // Stacks checkboxes neatly on top of each other
 							alignItems: 'flex-start', // Keeps them all left-aligned
-							gap: '8px', // Space between each checkbox row
-							minWidth: '180px' // Prevents layout squeezing when empty rows are added
+							gap: `${Math.max(6, Math.round(8 * uiScale))}px`, // Space between each checkbox row
+							minWidth: `${Math.max(140, Math.round(180 * uiScale))}px` // Prevents layout squeezing when empty rows are added
 						}}>
 
 					
@@ -807,10 +811,10 @@ export default function App() {
 							<label style={{ 
 								display: 'flex', 
 								alignItems: 'center', 
-								gap: '10px', 
+								gap: `${Math.max(8, Math.round(10 * uiScale))}px`, 
 								color: isChill ? '#ff00ff' : '#0f0', 
 								fontFamily: 'monospace', 
-								fontSize: '15px', 
+								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`, 
 								fontWeight: 'bold', 
 								cursor: 'pointer',
 								userSelect: 'none',
@@ -820,10 +824,10 @@ export default function App() {
 									type="checkbox" 
 									checked={isChill}
 									onChange={toggleChill}
-									style={{ 
+									style={{
 										accentColor: '#0f0', 
-										width: '18px', 
-										height: '18px',
+										width: `${Math.max(14, Math.round(18 * uiScale))}px`, 
+										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
 										cursor: 'pointer'
 									}} />
 								<span>CHILL</span>
@@ -833,10 +837,10 @@ export default function App() {
 							<label style={{
 								display: 'flex',
 								alignItems: 'center',
-								gap: '10px',
+								gap: `${Math.max(8, Math.round(10 * uiScale))}px`,
 								color: isMuted ? '#444' : '#0f0', 
 								fontFamily: 'monospace',
-								fontSize: '15px',
+								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`,
 								fontWeight: 'bold',
 								cursor: 'pointer',
 								userSelect: 'none',
@@ -848,8 +852,8 @@ export default function App() {
 									onChange={toggleMute}
 									style={{
 										accentColor: '#0f0', 
-										width: '18px',
-										height: '18px',
+										width: `${Math.max(14, Math.round(18 * uiScale))}px`,
+										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
 										cursor: 'pointer'
 									}}/>
 								<span>MUTE MUSIC</span>
@@ -860,10 +864,10 @@ export default function App() {
 							<label style={{ 
 								display: 'flex', 
 								alignItems: 'center', 
-								gap: '10px', 
+								gap: `${Math.max(8, Math.round(10 * uiScale))}px`, 
 								color: isSfxMuted ? '#444' : '#0f0', 
 								fontFamily: 'monospace', 
-								fontSize: '15px', 
+								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`, 
 								fontWeight: 'bold', 
 								cursor: 'pointer',
 								userSelect: 'none',
@@ -874,8 +878,8 @@ export default function App() {
 									onChange={toggleSfxMute}
 									style={{ 
 										accentColor: '#0f0', 
-										width: '18px', 
-										height: '18px',
+										width: `${Math.max(14, Math.round(18 * uiScale))}px`, 
+										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
 										cursor: 'pointer'
 									}} 
 									/>
@@ -898,26 +902,26 @@ export default function App() {
 								<button 
 									onClick={() => { onReset() }} 
 									style={{ 
-										padding: '12px 24px', 
+										padding: `${Math.max(8, Math.round(12 * uiScale))}px ${Math.max(14, Math.round(24 * uiScale))}px`, 
 										background: '#0f0', 
 										color: '#000', 
 										border: 'none', 
 										fontWeight: 'bold', 
 										cursor: 'pointer',
-										fontSize: '16px'
+										fontSize: `${Math.max(13, Math.round(16 * uiScale))}px`
 									}}>
 									RESET SIMULATION
 								</button>
 								<button 
 									onClick={clearHighScores} 
 									style={{ 
-										padding: '12px 24px', 
+										padding: `${Math.max(8, Math.round(12 * uiScale))}px ${Math.max(14, Math.round(24 * uiScale))}px`, 
 										backgroundColor: '#330000', 
 										color: '#ff4444', 
 										border: '2px solid #ff4444', 
 										fontWeight: 'bold',
 										cursor: 'pointer',
-										fontSize: '16px'
+										fontSize: `${Math.max(13, Math.round(16 * uiScale))}px`
 									}}>
 									CLEAR HIGH SCORES
 								</button>
@@ -1081,7 +1085,7 @@ export default function App() {
                 right: '20px',       
                 textAlign: 'left',   
                 color: '#555', 
-                fontSize: '16px', 
+                fontSize: `${Math.max(12, Math.round(16 * uiScale))}px`, 
                 zIndex: 25, 
                 pointerEvents: 'none',
                 fontFamily: 'monospace'
@@ -1090,7 +1094,7 @@ export default function App() {
             </label>
 
             {/* Mount isolated modular structures globally available on window scope */}
-            <TouchControls dpadPos={dpadPos} isDragging={isDragging} activeDir={activeDir} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} handleDragStart={handleDragStart} handleDragMove={handleDragMove} handleDragEnd={handleDragEnd} />
+            <TouchControls viewportSize={viewportSize} dpadPos={dpadPos} isDragging={isDragging} activeDir={activeDir} handleTouchStart={handleTouchStart} handleTouchEnd={handleTouchEnd} handleDragStart={handleDragStart} handleDragMove={handleDragMove} handleDragEnd={handleDragEnd} />
             
             <SoundManager isCollision={isCollision} isVictory={isVictory} 
 				isBlip={isBlip} isReset={isReset} isStartAppear={playResetOnSpawn} 

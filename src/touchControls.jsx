@@ -1,16 +1,26 @@
-// Isolate your massive draggable 90-degree arc-wheel thumb pad
-export default function TouchControls({ dpadPos, isDragging, activeDir, handleTouchStart, handleTouchEnd, handleDragStart, handleDragMove, handleDragEnd }) {
-    if (window.innerWidth >= 1024) return null; // Hide on desktops
+// The 90-degree arc-wheel thumb pad with its own component for clarity and reusability
+// This component is designed to be responsive and adapt to different screen sizes, especially for mobile devices.
+export default function TouchControls({ dpadPos, isDragging, activeDir, handleTouchStart, handleTouchEnd, handleDragStart, handleDragMove, handleDragEnd, viewportSize }) {
+    const width = viewportSize?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 1024);
+    const height = viewportSize?.height ?? (typeof window !== 'undefined' ? window.innerHeight : 768);
+    const controlSize = Math.min(Math.max(180, Math.round(Math.min(width, height) * (width < 768 ? 0.30 : 0.24))), 320);
+    const handleHeight = Math.max(34, Math.round(controlSize * 0.15));
+    const centerSize = Math.max(50, Math.round(controlSize * 0.24));
+    const arcInset = Math.max(6, Math.round(controlSize * 0.025));
+    const arrowPad = Math.max(18, Math.round(controlSize * 0.10));
+    const arrowSize = Math.max(18, Math.round(controlSize * 0.11));
+
+    if (width >= 1024) return null; // Hide on desktops
     
     return (
-        <div style={{ position: 'absolute', bottom: `${dpadPos.bottom}px`, right: `${dpadPos.right}px`, width: '260px', height: '305px', display: 'flex', flexDirection: 'column', zIndex: 45, touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }} onContextMenu={(e) => e.preventDefault()}>
+        <div style={{ position: 'absolute', bottom: `${dpadPos.bottom}px`, right: `${dpadPos.right}px`, width: `${controlSize}px`, height: `${controlSize + handleHeight + 8}px`, display: 'flex', flexDirection: 'column', zIndex: 45, touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }} onContextMenu={(e) => e.preventDefault()}>
 			{/* Drage Handle Area */}
 			<div 
 				onTouchStart={handleDragStart}
 				onTouchMove={handleDragMove}
 				onTouchEnd={handleDragEnd}
 				style={{ 
-					height: '40px', 
+					height: `${handleHeight}px`, 
 					marginBottom: '8px', 
 					background: isDragging ? '#0f0' : '#111',
 					color: isDragging ? '#000' : '#0f0',
@@ -20,7 +30,7 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 					display: 'flex', 
 					alignItems: 'center', 
 					justifyContent: 'center',
-					fontSize: '11px',
+					fontSize: `${Math.max(10, Math.round(controlSize * 0.044))}px`,
 					fontWeight: 'bold',
 					letterSpacing: '1px',
 					cursor: 'move'//,
@@ -31,12 +41,12 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 			{/* The Arc Steering Wheel Wrapper */}
 			<div style={{
 				position: 'relative',
-				width: '260px',
-				height: '260px',
+				width: `${controlSize}px`,
+				height: `${controlSize}px`,
 				background: 'rgba(0,0,0,0.95)',
 				border: '3px solid #0f0',
 				borderTop: 'none',
-				borderRadius: '0 0 130px 130px', // Perfect semi-circle shell base
+				borderRadius: `0 0 ${controlSize / 2}px ${controlSize / 2}px`, // Perfect semi-circle shell base
 				boxShadow: '0 0 25px rgba(0, 255, 0, 0.25)',
 				overflow: 'hidden'
 			}}>
@@ -46,8 +56,8 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 					top: '50%',
 					left: '50%',
 					transform: 'translate(-50%, -50%)',
-					width: '60px',
-					height: '60px',
+					width: `${centerSize}px`,
+					height: `${centerSize}px`,
 					background: '#111',
 					border: '2px solid #0f0',
 					borderRadius: '50%',
@@ -76,9 +86,9 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 						cursor: 'pointer',
 						display: 'flex',
 						justifyContent: 'center',
-						paddingTop: '25px',
+						paddingTop: `${arrowPad}px`,
 						color: activeDir === 'ArrowUp' ? '#000' : '#0f0',
-						fontSize: '28px',
+						fontSize: `${arrowSize}px`,
 						fontWeight: 'bold',
 						zIndex: 46
 					}}>
@@ -102,9 +112,9 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'flex-end',
-						paddingRight: '25px',
+						paddingRight: `${arrowPad}px`,
 						color: activeDir === 'ArrowRight' ? '#000' : '#0f0',
-						fontSize: '28px',
+						fontSize: `${arrowSize}px`,
 						fontWeight: 'bold',
 						zIndex: 46
 					}}>
@@ -128,9 +138,9 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'flex-end',
-						paddingBottom: '25px',
+						paddingBottom: `${arrowPad}px`,
 						color: activeDir === 'ArrowDown' ? '#000' : '#0f0',
-						fontSize: '28px',
+						fontSize: `${arrowSize}px`,
 						fontWeight: 'bold',
 						zIndex: 46
 					}}>
@@ -153,9 +163,9 @@ export default function TouchControls({ dpadPos, isDragging, activeDir, handleTo
 						cursor: 'pointer',
 						display: 'flex',
 						alignItems: 'center',
-						paddingLeft: '25px',
+						paddingLeft: `${arrowPad}px`,
 						color: activeDir === 'ArrowLeft' ? '#000' : '#0f0',
-						fontSize: '28px',
+						fontSize: `${arrowSize}px`,
 						fontWeight: 'bold',
 						zIndex: 46
 					}}>
