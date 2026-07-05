@@ -40,12 +40,14 @@ export const WALLS_ELITE = new Set([
 	makeWallKey(-3, 0, -2, 0)
 ]);
 
-export default function HexTile({ HEX_SIZE, q, r, isSelected, diff, isGoal, onFlashChange = () => {}, onSelect = () => {}, isPreview = false, startPos, spawnActive = false, spawnProgress = 0 }) {
+export default function HexTile({ HEX_SIZE, q, r, isSelected, diff, isGoal, onFlashChange = () => {}, onSelect = () => {}, isPreview = false, startPos, spawnActive = false, spawnProgress = 0, viewportSize }) {
 
 	const [flashColor, setFlashColor] = useState("rgba(255,255,255,0.03)");
 	const [isRogue, setRogue] = useState(false);
-	const x = HEX_SIZE * (3/2 * q) + window.innerWidth / 2;
-	const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + window.innerHeight / 2;
+	const width = viewportSize?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 1280);
+	const height = viewportSize?.height ?? (typeof window !== 'undefined' ? window.innerHeight : 720);
+	const x = HEX_SIZE * (3/2 * q) + width / 2;
+	const y = HEX_SIZE * (Math.sqrt(3) * (r + q/2)) + height / 2;
 	const isStart = startPos && q === startPos.q && r === startPos.r;
 	const wallsInUse = diff.label === "ELITE" ? WALLS_ELITE : diff.label === "HARD" ? WALLS_HARD : WALLS_EASY;
 

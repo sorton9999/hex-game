@@ -50,6 +50,29 @@ bkgrnd2: bgMusicTwo
 
 
 export default function App() {
+            const [viewportSize, setViewportSize] = useState(() => ({
+                width: typeof window !== 'undefined' ? window.innerWidth : 1280,
+                height: typeof window !== 'undefined' ? window.innerHeight : 720
+            }));
+
+            useEffect(() => {
+                const updateViewport = () => {
+                    const width = window.visualViewport?.width ?? window.innerWidth;
+                    const height = window.visualViewport?.height ?? window.innerHeight;
+                    setViewportSize({ width, height });
+                };
+
+                updateViewport();
+                window.addEventListener('resize', updateViewport);
+                window.addEventListener('orientationchange', updateViewport);
+                window.visualViewport?.addEventListener('resize', updateViewport);
+
+                return () => {
+                    window.removeEventListener('resize', updateViewport);
+                    window.removeEventListener('orientationchange', updateViewport);
+                    window.visualViewport?.removeEventListener('resize', updateViewport);
+                };
+            }, []);
 
             // Define difficulty levels with their respective spawn rates and hazard durations
             const DIFFICULTY_LEVELS = {
@@ -91,6 +114,14 @@ export default function App() {
             const [diff, setDiff] = useState(getDifficultyForLevel(1));            
             const [level, setLevel] = useState(1);
             const currentRadius = level >= 8 ? BASE_RADIUS + 2 : BASE_RADIUS;
+            const responsiveHexSize = useMemo(() => {
+                const radius = Math.max(currentRadius, 3);
+                const widthBudget = Math.max(240, viewportSize.width - 48);
+                const heightBudget = Math.max(240, viewportSize.height - 220);
+                const widthBased = widthBudget / ((radius * 2 + 1) * 1.5);
+                const heightBased = heightBudget / ((radius * 2 + 1) * 1.8);
+                return Math.max(18, Math.min(38, Math.min(widthBased, heightBased)));
+            }, [currentRadius, viewportSize.width, viewportSize.height]);
             const START_POS = { q: 0, r: currentRadius };
             const GOAL_POS = { q: 0, r: -currentRadius };
             const getGoalTransitionSide = ({ q, r }) => {
@@ -901,18 +932,19 @@ export default function App() {
             {/* HIGH-DENSITY SCALING WRAPPER FRAME */}
             <div style={{
                 position: 'absolute',
-                width: '100%',
-                height: '100%',
+                inset: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 zIndex: 10,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                backgroundColor: '#0c0d12'
             }}>
 				{/* Render Board Engine Call Container */}
-				<div style={{ position: 'absolute', width: '3840px', height: '2160px', transform: 'scale(clamp(0.45, 100vw / 3840, 1.2))', transformOrigin: 'center center', backgroundColor: '#0c0d12' }}>
+				<div style={{ position: 'absolute', inset: 0 }}>
 					{renderBoard({ 
-                        HEX_SIZE: HEX_SIZE,
+                        HEX_SIZE: responsiveHexSize,
+                        viewportSize,
                         tiles: tiles,
                         startPos: START_POS,
                         boardSelected: playerActive ? selected : { q: 9999, r: 9999 },
@@ -942,7 +974,8 @@ export default function App() {
                         })()
 					})}
                     {pendingBoardActive && renderBoard({
-                        HEX_SIZE: HEX_SIZE,
+                        HEX_SIZE: responsiveHexSize,
+                        viewportSize,
                         tiles: tiles,
                         startPos: START_POS,
                         boardSelected: START_POS,
