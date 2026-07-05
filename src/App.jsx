@@ -717,222 +717,186 @@ export default function App() {
             
             {/* The Main Center-Aligned HUD Panel */}
             <div className="ui" style={{  
-				position: 'absolute',
-				top: viewportSize.width < 768 ? '8px' : '20px',
-				left: viewportSize.width < 768 ? '8px' : '5vw',
-				right: viewportSize.width < 768 ? '8px' : '5vw',
-				width: viewportSize.width < 768 ? 'calc(100% - 16px)' : '90vw',
-				maxWidth: '1200px',
-				margin: '0 auto',
-				padding: `${Math.max(10, Math.round(16 * uiScale))}px ${Math.max(12, Math.round(22 * uiScale))}px`,
-				pointerEvents: 'auto',
-				background: 'rgba(0, 0, 0, 0.95)', 
-				border: `${Math.max(2, Math.round(4 * uiScale))}px solid #0f0`, 
-				boxShadow: '0 0 20px rgba(0, 255, 0, 0.45)', 
-				zIndex: 40,                     
-				borderRadius: '4px'
-			}}>
-				<div className="ui-inner" style={{ 
-					display: 'flex', 
-					flexDirection: 'column',
-					//flexWrap: 'wrap', 
-					alignItems: 'center', 
-					justifyContent: 'center', 
-					gap: `${Math.max(10, Math.round(16 * uiScale))}px`,
-					width: '100%'
-				}}>
-					{status === "won" && (
-						<div className="victory" style={{ 
-							color: '#0f0', 
-							fontWeight: 'bold', 
-							fontSize: 'clamp(24px, 4vw, 48px)', 
-							letterSpacing: '3px',
-							textShadow: '0 0 12px #0f0',
-							marginBottom: '5px',
-							textAlign: 'center' 
-						}}>
-							SYSTEM SECURED!
-						</div>
-					)}
-					
-					<div style={{ 
-						display: 'flex', 
-						gap: `${Math.max(10, Math.round(20 * uiScale))}px`, 
-						flexWrap: 'wrap',
-						alignItems: 'center', 
-						fontSize: `${Math.max(14, Math.round(18 * uiScale))}px`, 
-						color: '#0f0', 
-						fontFamily: 'monospace', 
-						fontWeight: 'bold'
-					}}>
-						<div className="stat"><span style={{ color: '#888' }}>LEVEL:</span> <span>{level}</span></div>
-						<div className="stat"><span style={{ color: '#888' }}>TIME:</span> <span>{timer}s</span></div>
-						<div className="stat"><span style={{ color: '#888' }}>HITS:</span> <span>{collisions}</span></div>
-						
-						<div className="high-scores" style={{ display: 'flex', gap: `${Math.max(12, Math.round(24 * uiScale))}px`, flexWrap: 'wrap' }}>
-							<div className="stat">
-								<span style={{ color: '#888' }}>FASTEST TIME:</span> 
-								<span>{bestTime}{bestTime !== '--' && 's'}</span>
-							</div>
-							<div className="stat">
-								<span style={{ color: '#888' }}>FEWEST HITS:</span> 
-								<span>{bestCollisions}</span>
-							</div>
-						</div>
-						
-						<div className="stat"><span style={{ color: '#888' }}>DIFFICULTY:</span> <span style={{ color: '#ffaa00' }}>{diff.label}</span></div>
-					</div>
+                position: 'absolute',
+                top: viewportSize.width < 768 ? '6px' : '10px',
+                left: viewportSize.width < 768 ? '6px' : '12px',
+                right: viewportSize.width < 768 ? '6px' : '12px',
+                width: viewportSize.width < 768 ? 'calc(100% - 12px)' : 'min(94vw, 1200px)',
+                maxWidth: '1200px',
+                margin: '0 auto',
+                padding: viewportSize.width < 768 ? '8px 10px 10px' : '10px 12px 12px',
+                pointerEvents: 'auto',
+                background: 'rgba(0, 0, 0, 0.92)', 
+                border: viewportSize.width < 768 ? '2px solid #0f0' : '3px solid #0f0', 
+                boxShadow: '0 0 16px rgba(0, 255, 0, 0.3)', 
+                zIndex: 40,                     
+                borderRadius: '4px'
+            }}>
+                <div className="ui-inner" style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    justifyContent: 'center', 
+                    gap: '6px',
+                    width: '100%'
+                }}>
+                    {status === "won" && (
+                        <div className="victory" style={{ 
+                            color: '#0f0', 
+                            fontWeight: 'bold', 
+                            fontSize: viewportSize.width < 768 ? '18px' : '22px',
+                            letterSpacing: '2px',
+                            textShadow: '0 0 8px #0f0',
+                            marginBottom: '2px',
+                            textAlign: 'center' 
+                        }}>
+                            SYSTEM SECURED!
+                        </div>
+                    )}
+                    
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: viewportSize.width < 768 ? '8px' : '12px', 
+                        flexWrap: 'wrap',
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        fontSize: viewportSize.width < 768 ? '13px' : '14px', 
+                        color: '#0f0', 
+                        fontFamily: 'monospace', 
+                        fontWeight: 'bold'
+                    }}>
+                        <div style={{ display: 'flex', gap: viewportSize.width < 768 ? '8px' : '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <div className="stat"><span style={{ color: '#888' }}>LVL:</span> <span>{level}</span></div>
+                            <div className="stat"><span style={{ color: '#888' }}>TIME:</span> <span>{timer}s</span></div>
+                            <div className="stat"><span style={{ color: '#888' }}>HITS:</span> <span>{collisions}</span></div>
+                            <div className="stat"><span style={{ color: '#888' }}>MODE:</span> <span style={{ color: '#ffaa00' }}>{diff.label}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', gap: viewportSize.width < 768 ? '8px' : '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <div className="stat"><span style={{ color: '#888' }}>FAST:</span> <span>{bestTime}{bestTime !== '--' && 's'}</span></div>
+                            <div className="stat"><span style={{ color: '#888' }}>LOW:</span> <span>{bestCollisions}</span></div>
+                        </div>
+                    </div>
 
+                    <div style={{ 
+                        display: 'flex', 
+                        flexWrap: 'wrap',
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        width: '100%'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            gap: viewportSize.width < 768 ? '6px' : '8px'
+                        }}>
+                            <label style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '6px', 
+                                color: isChill ? '#ff00ff' : '#0f0', 
+                                fontFamily: 'monospace', 
+                                fontSize: viewportSize.width < 768 ? '12px' : '13px', 
+                                fontWeight: 'bold', 
+                                cursor: 'pointer',
+                                userSelect: 'none'
+                            }}>
+                                <input 
+                                    type="checkbox" 
+                                    checked={isChill}
+                                    onChange={toggleChill}
+                                    style={{
+                                        accentColor: '#0f0', 
+                                        width: '14px', 
+                                        height: '14px',
+                                        cursor: 'pointer'
+                                    }} />
+                                <span>CHILL</span>
+                            </label>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: isMuted ? '#444' : '#0f0', 
+                                fontFamily: 'monospace',
+                                fontSize: viewportSize.width < 768 ? '12px' : '13px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                userSelect: 'none'
+                            }}>
+                                <input 
+                                    type="checkbox"
+                                    checked={isMuted}
+                                    onChange={toggleMute}
+                                    style={{
+                                        accentColor: '#0f0', 
+                                        width: '14px',
+                                        height: '14px',
+                                        cursor: 'pointer'
+                                    }}/>
+                                <span>MUTE</span>
+                            </label>
+                            {viewportSize.width >= 768 && (
+                            <label style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '6px', 
+                                color: isSfxMuted ? '#444' : '#0f0', 
+                                fontFamily: 'monospace', 
+                                fontSize: '13px', 
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                userSelect: 'none'
+                            }}>
+                                <input type="checkbox" 
+                                    checked={isSfxMuted}
+                                    onChange={toggleSfxMute}
+                                    style={{ 
+                                        accentColor: '#0f0', 
+                                        width: '14px', 
+                                        height: '14px',
+                                        cursor: 'pointer'
+                                    }} />
+                                <span>SFX</span>
+                            </label>
+                            )}
+                        </div>
 
-					<div style={{ 
-						display: 'flex', 
-						flexWrap: 'wrap',
-						alignItems: 'center', 
-						justifyContent: 'space-between', // Pushes the checkbox stack left and buttons right
-						gap: `${Math.max(12, Math.round(20 * uiScale))}px`,
-						width: '100%',
-						marginTop: `${Math.max(8, Math.round(10 * uiScale))}px`,
-						borderTop: '1px dashed rgba(0, 255, 0, 0.2)', // Subtle dividing line above controls
-						paddingTop: `${Math.max(10, Math.round(14 * uiScale))}px`
-					}}>
-
-						{/* LEFT COLUMN: FUTURE-PROOF CHECBOX VERTICAL STACK */}
-						<div style={{
-							display: 'flex',
-							flexDirection: 'column', // Stacks checkboxes neatly on top of each other
-							alignItems: 'flex-start', // Keeps them all left-aligned
-							gap: `${Math.max(6, Math.round(8 * uiScale))}px`, // Space between each checkbox row
-							minWidth: `${Math.max(140, Math.round(180 * uiScale))}px` // Prevents layout squeezing when empty rows are added
-						}}>
-
-					
-
-							{/* CHILL CHECKBOX */}
-							<label style={{ 
-								display: 'flex', 
-								alignItems: 'center', 
-								gap: `${Math.max(8, Math.round(10 * uiScale))}px`, 
-								color: isChill ? '#ff00ff' : '#0f0', 
-								fontFamily: 'monospace', 
-								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`, 
-								fontWeight: 'bold', 
-								cursor: 'pointer',
-								userSelect: 'none',
-								transition: 'color 0.15s ease'
-						   }}>
-								<input 
-									type="checkbox" 
-									checked={isChill}
-									onChange={toggleChill}
-									style={{
-										accentColor: '#0f0', 
-										width: `${Math.max(14, Math.round(18 * uiScale))}px`, 
-										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
-										cursor: 'pointer'
-									}} />
-								<span>CHILL</span>
-							</label> 
-							
-							{/* MUTE MUSIC */}
-							<label style={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: `${Math.max(8, Math.round(10 * uiScale))}px`,
-								color: isMuted ? '#444' : '#0f0', 
-								fontFamily: 'monospace',
-								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`,
-								fontWeight: 'bold',
-								cursor: 'pointer',
-								userSelect: 'none',
-								transition: 'color 0.15s ease'
-							}}>
-								<input 
-									type="checkbox"
-									checked={isMuted}
-									onChange={toggleMute}
-									style={{
-										accentColor: '#0f0', 
-										width: `${Math.max(14, Math.round(18 * uiScale))}px`,
-										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
-										cursor: 'pointer'
-									}}/>
-								<span>MUTE MUSIC</span>
-							</label>
-
-							{/* MUTE SFX */}
-							{
-							<label style={{ 
-								display: 'flex', 
-								alignItems: 'center', 
-								gap: `${Math.max(8, Math.round(10 * uiScale))}px`, 
-								color: isSfxMuted ? '#444' : '#0f0', 
-								fontFamily: 'monospace', 
-								fontSize: `${Math.max(13, Math.round(15 * uiScale))}px`, 
-								fontWeight: 'bold', 
-								cursor: 'pointer',
-								userSelect: 'none',
-								transition: 'color 0.15s ease'
-							}}>
-								<input type="checkbox" 
-									checked={isSfxMuted}
-									onChange={toggleSfxMute}
-									style={{ 
-										accentColor: '#0f0', 
-										width: `${Math.max(14, Math.round(18 * uiScale))}px`, 
-										height: `${Math.max(14, Math.round(18 * uiScale))}px`,
-										cursor: 'pointer'
-									}} 
-									/>
-								<span>MUTE SFX</span>
-							</label> 
-							}
-
-						</div>
-
-						{/* RIGHT COLUMN: ACTION BUTTON CLUSTER */}
-						<div style={{ 
-							display: 'flex', 
-							gap: '12px', 
-							flexWrap: 'wrap',
-							justifyContent: 'flex-end' // Locks action buttons tightly to the right margin
-						}}>
-
-
-							<div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '5px' }}>
-								<button 
-									onClick={() => { onReset() }} 
-									style={{ 
-										padding: `${Math.max(8, Math.round(12 * uiScale))}px ${Math.max(14, Math.round(24 * uiScale))}px`, 
-										background: '#0f0', 
-										color: '#000', 
-										border: 'none', 
-										fontWeight: 'bold', 
-										cursor: 'pointer',
-										fontSize: `${Math.max(13, Math.round(16 * uiScale))}px`
-									}}>
-									RESET SIMULATION
-								</button>
-								<button 
-									onClick={clearHighScores} 
-									style={{ 
-										padding: `${Math.max(8, Math.round(12 * uiScale))}px ${Math.max(14, Math.round(24 * uiScale))}px`, 
-										backgroundColor: '#330000', 
-										color: '#ff4444', 
-										border: '2px solid #ff4444', 
-										fontWeight: 'bold',
-										cursor: 'pointer',
-										fontSize: `${Math.max(13, Math.round(16 * uiScale))}px`
-									}}>
-									CLEAR HIGH SCORES
-								</button>
-							</div>
-
-
-						</div>
-					</div>
-				</div>
-			</div>
-			
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            <button 
+                                onClick={() => { onReset() }} 
+                                style={{ 
+                                    padding: viewportSize.width < 768 ? '7px 10px' : '8px 12px', 
+                                    background: '#0f0', 
+                                    color: '#000', 
+                                    border: 'none', 
+                                    fontWeight: 'bold', 
+                                    cursor: 'pointer',
+                                    fontSize: viewportSize.width < 768 ? '12px' : '13px'
+                                }}>
+                                RESET
+                            </button>
+                            {viewportSize.width >= 768 && (
+                            <button 
+                                onClick={clearHighScores} 
+                                style={{ 
+                                    padding: '8px 12px', 
+                                    backgroundColor: '#330000', 
+                                    color: '#ff4444', 
+                                    border: '2px solid #ff4444', 
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    fontSize: '13px'
+                                }}>
+                                CLEAR
+                            </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             {/* HIGH-DENSITY SCALING WRAPPER FRAME */}
             <div style={{
                 position: 'absolute',
