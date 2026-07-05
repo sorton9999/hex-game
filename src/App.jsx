@@ -724,7 +724,7 @@ export default function App() {
                 width: viewportSize.width < 768 ? 'calc(100% - 12px)' : 'min(94vw, 1200px)',
                 maxWidth: '1200px',
                 margin: '0 auto',
-                padding: viewportSize.width < 768 ? '8px 10px 10px' : '10px 12px 12px',
+                padding: viewportSize.width < 768 ? '8px 8px 8px' : '10px 10px 10px',
                 pointerEvents: 'auto',
                 background: 'rgba(0, 0, 0, 0.92)', 
                 border: viewportSize.width < 768 ? '2px solid #0f0' : '3px solid #0f0', 
@@ -778,11 +778,9 @@ export default function App() {
                     </div>
 
                     <div style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap',
-                        alignItems: 'center', 
-                        justifyContent: 'space-between',
-                        gap: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
                         width: '100%'
                     }}>
                         <div style={{
@@ -835,16 +833,15 @@ export default function App() {
                                         height: '14px',
                                         cursor: 'pointer'
                                     }}/>
-                                <span>MUTE</span>
+                                <span>MUSIC</span>
                             </label>
-                            {viewportSize.width >= 768 && (
                             <label style={{ 
                                 display: 'flex', 
                                 alignItems: 'center', 
                                 gap: '6px', 
                                 color: isSfxMuted ? '#444' : '#0f0', 
                                 fontFamily: 'monospace', 
-                                fontSize: '13px', 
+                                fontSize: viewportSize.width < 768 ? '12px' : '13px', 
                                 fontWeight: 'bold',
                                 cursor: 'pointer',
                                 userSelect: 'none'
@@ -860,10 +857,9 @@ export default function App() {
                                     }} />
                                 <span>SFX</span>
                             </label>
-                            )}
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-start', paddingLeft: '2px' }}>
                             <button 
                                 onClick={() => { onReset() }} 
                                 style={{ 
