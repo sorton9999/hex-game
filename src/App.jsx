@@ -3,6 +3,13 @@ import renderBoard from './gameBoard';
 import { makeWallKey, WALLS_EASY, WALLS_HARD, WALLS_ELITE, PERMANENT_ROGUES, TEMP_PROTECTED, NEIGHBOR_TILES, rogueState } from './hexTile';
 import TouchControls from './touchControls';
 import SoundManager from './soundManager';
+import collisionSound from './assets/sounds/mixkit-explainer-video-game-alert-sweep-236.wav';
+import victorySound from './assets/sounds/mixkit-winning-notification-2018.wav';
+import blipSound from './assets/sounds/mixkit-quick-lock-sound-2854.wav';
+import startSound from './assets/sounds/mixkit-arcade-rising-231.wav';
+import resetSound from './assets/sounds/mixkit-extra-bonus-in-a-video-game-2045.wav';
+import bgMusicOne from './assets/sounds/the_price_of_freedom-loop1.ogg';
+import bgMusicTwo from './assets/sounds/awake10_megaWall.mp3';
 
 // Use a separate CSS module for clean styling
 import './App.css'; 
@@ -29,13 +36,13 @@ const getDifficultyForLevel = function(level) {
 
 // Sound files for different events
 const SOUND_FILES = {
-collision: '/src/assets/sounds/mixkit-explainer-video-game-alert-sweep-236.wav',
-victory: '/src/assets/sounds/mixkit-winning-notification-2018.wav',
-blip: '/src/assets/sounds/mixkit-quick-lock-sound-2854.wav',
-start: '/src/assets/sounds/mixkit-arcade-rising-231.wav',
-reset: '/src/assets/sounds/mixkit-extra-bonus-in-a-video-game-2045.wav',
-bkgrnd1: '/src/assets/sounds/the_price_of_freedom-loop1.ogg',
-bkgrnd2: '/src/assets/sounds/awake10_megaWall.mp3'
+collision: collisionSound,
+victory: victorySound,
+blip: blipSound,
+start: startSound,
+reset: resetSound,
+bkgrnd1: bgMusicOne,
+bkgrnd2: bgMusicTwo
 };
 
 // Directions for neighboring tiles in axial coordinates (q, r)

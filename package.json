@@ -4,13 +4,16 @@
   "version": "0.0.0",
   "description": "A hexagonal grid-based game built with React and Vite.",
   "homepage": "https://sorton9999.github.io",
+  "author": "Steven Orton",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
-  },
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+},
   "dependencies": {
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
