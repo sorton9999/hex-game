@@ -1,0 +1,81 @@
+html, body, #root, #app {
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100vh !important;
+    background-color: #000;
+    overflow: hidden;
+}
+
+body { margin: 0; background: #050505; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; overflow: hidden; }
+.ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px;
+    border: 1px solid #333;
+}
+.ui-inner {
+    display: flex;
+    flex-wrap: wrap; /* Wraps items when the screen gets too narrow */
+    align-items: center;
+    justify-content: center; /* Centers items on small screens, adjust to flex-start if preferred */
+    gap: 15px; /* Replaces manual margins with uniform spacing */
+}
+.stat {
+    font-size: clamp(0.8rem, 1vw, 1rem); /* Scales text dynamically on smaller screens */
+    display: flex;
+    gap: 8px;
+}
+.high-scores {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+button {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+svg { display: block; margin: auto; height: 100vh; width: 100vw; }
+.victory { color: #fff; text-shadow: 0 0 10px #0f0; font-size: 1.2em; margin-bottom: 10px; }
+.wall-blocked { color: #ff0000; font-weight: bold; }
+/* Style for the Start and Goal text labels */
+.tile-label { font-size: 12px; fill: #b614df; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+.glowing-wall-animation {
+    animation: wall-pulse 2s infinite ease-in-out;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+@media (max-width: 768px) {
+    .ui-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .high-scores {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+@keyframes wall-pulse {
+    0% { 
+        stroke-width: 2; 
+        opacity: 0.5; 
+        filter: drop-shadow(0 0 2px #00f2ff);
+    }
+    50% { 
+        stroke-width: 5; 
+        opacity: 1; 
+        filter: drop-shadow(0 0 8px #00f2ff);
+    }
+    100% { 
+        stroke-width: 2; 
+        opacity: 0.5; 
+        filter: drop-shadow(0 0 2px #00f2ff);
+    }
+}    
