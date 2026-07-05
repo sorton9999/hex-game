@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "description": "A hexagonal grid-based game built with React and Vite.",
-  "homepage": "https://sorton9999.github.io",
+  "homepage": "https://sorton9999.github.io/hex-game",
   "author": "Steven Orton",
   "type": "module",
   "scripts": {
