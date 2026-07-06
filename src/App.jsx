@@ -859,7 +859,7 @@ export default function App() {
                             </label>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-start', paddingLeft: '2px' }}>
+                        <div style={{ display: 'flex', gap: viewportSize.width < 768 ? '6px' : '8px', flexWrap: 'wrap', justifyContent: 'flex-start', alignItems: 'center', paddingLeft: '2px' }}>
                             <button 
                                 onClick={() => { onReset() }} 
                                 style={{ 
@@ -873,21 +873,19 @@ export default function App() {
                                 }}>
                                 RESET
                             </button>
-                            {viewportSize.width >= 768 && (
                             <button 
                                 onClick={clearHighScores} 
                                 style={{ 
-                                    padding: '8px 12px', 
+                                    padding: viewportSize.width < 768 ? '7px 10px' : '8px 12px', 
                                     backgroundColor: '#330000', 
                                     color: '#ff4444', 
                                     border: '2px solid #ff4444', 
                                     fontWeight: 'bold',
                                     cursor: 'pointer',
-                                    fontSize: '13px'
+                                    fontSize: viewportSize.width < 768 ? '11px' : '13px'
                                 }}>
                                 CLEAR
                             </button>
-                            )}
                         </div>
                     </div>
                 </div>
