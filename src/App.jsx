@@ -199,7 +199,7 @@ export default function App() {
 
             // Tracks which direction key is currently held down ('ArrowUp', 'ArrowDown', etc.)
             const [activeDir, setActiveDir] = useState(null);
-    
+
             const handleTouchStart = (dir) => {
                 setActiveDir(dir);
                 const event = new KeyboardEvent('keydown', { key: dir });
@@ -274,6 +274,8 @@ export default function App() {
                 }
             };
 
+            // Reset the game state to its initial values, including player position, goal position, 
+            // timer, collisions, and difficulty level.
             const onReset = () => {
                 // Reset music to start
                 if (bgMusicRef.current) {
@@ -443,8 +445,20 @@ export default function App() {
                     // Ensure tiles exist before picking one
                     if (perimeterTiles.length === 0) return;
 
-                    // Pick a random tile from the perimeter to move the goal to
-                    const nextTileIndex = perimeterTiles[Math.floor(Math.random() * perimeterTiles.length)];
+                    // Filter perimeter tiles 4 tiles away from the goal's current position
+                    const allowedTiles = perimeterTiles.filter(tile => {
+                        const distanceX = Math.abs(tile.q - goal.q);
+                        const distanceY = Math.abs(tile.r - goal.r);
+                        return distanceX <= 4 && distanceY <= 4;
+                    });
+
+                    // Pick a random tile from the allowed tiles to move the goal to
+                    let nextTileIndex;
+                    if (allowedTiles.length > 0) {
+                        nextTileIndex = allowedTiles[Math.floor(Math.random() * allowedTiles.length)];
+                    } else {
+                        nextTileIndex = perimeterTiles[Math.floor(Math.random() * perimeterTiles.length)];
+                    }
 
                     // If the new goal position is the same as the player's current position, skip this move
                     if (nextTileIndex.q === selected.q && nextTileIndex.r === selected.r) {
@@ -833,7 +847,7 @@ export default function App() {
                                         height: '14px',
                                         cursor: 'pointer'
                                     }}/>
-                                <span>MUSIC</span>
+                                <span>SILENT MUSIC</span>
                             </label>
                             <label style={{ 
                                 display: 'flex', 
@@ -855,7 +869,7 @@ export default function App() {
                                         height: '14px',
                                         cursor: 'pointer'
                                     }} />
-                                <span>SFX</span>
+                                <span>SILENT SFX</span>
                             </label>
                         </div>
 
